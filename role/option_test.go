@@ -20,8 +20,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/AthenZ/athenz-authorizer/v5/pubkey"
 	authcore "github.com/AthenZ/athenz/libs/go/zmssvctoken"
-	"github.com/yahoojapan/athenz-authorizer/v5/pubkey"
 )
 
 func TestWithPubkeyProvider(t *testing.T) {

@@ -1,12 +1,12 @@
 alias:
   default: &default
-    working_directory: /go/src/github.com/yahoojapan/athenz-authorizer
+    working_directory: /go/src/github.com/AthenZ/athenz-authorizer
     docker:
       - image: circleci/golang:1.16
         environment:
           GOPATH: "/go"
           GO111MODULE: "on"
-          REPO_NAME: "yahoojapan"
+          REPO_NAME: "AthenZ"
           IMAGE_NAME: "athenz-authorizer"
           GITHUB_API: "https://api.github.com/"
           DOCKER_USER: "kpango"
