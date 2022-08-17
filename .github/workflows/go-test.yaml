@@ -1,0 +1,90 @@
+name: Go test
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+on:
+  schedule:
+    - cron: '0 10 * * *'
+  # If any commit message in your push or the HEAD commit of your PR contains the strings
+  # [skip ci], [ci skip], [no ci], [skip actions], or [actions skip]
+  # workflows triggered on the push or pull_request events will be skipped.
+  # https://github.blog/changelog/2021-02-08-github-actions-skip-pull-request-and-push-workflows-with-skip-ci/
+  push:
+    branches: [ master ]
+    # Publish semver tags as releases.
+    tags: [ 'v[0-9]+.[0-9]+.[0-9]+' ]
+  # If any commit message in your push or the HEAD commit of your PR contains the strings
+  # [skip ci], [ci skip], [no ci], [skip actions], or [actions skip]
+  # workflows triggered on the push or pull_request events will be skipped.
+  # https://github.blog/changelog/2021-02-08-github-actions-skip-pull-request-and-push-workflows-with-skip-ci/
+  pull_request:
+    branches: [ master ]
+
+env:
+  GOLANG_VERSION: ^1.18
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: none
+      checks: none
+      contents: read
+      deployments: none
+      issues: none
+      discussions: none
+      packages: none
+      pull-requests: none
+      repository-projects: none
+      security-events: none
+      statuses: none
+
+    steps:
+      # This action checks-out your repository under $GITHUB_WORKSPACE, so your workflow can access it.
+      # https://github.com/actions/checkout
+      -
+        name: Checkout repository
+        id: checkout
+        # You may pin to the exact commit or the version.
+        # uses: https://github.com/actions/checkout/tags
+        uses: actions/checkout@v3
+
+      # This action sets up a go environment for use in actions by:
+      # - Optionally downloading and caching a version of Go by version and adding to PATH.
+      # - Registering problem matchers for error output.
+      # https://github.com/actions/setup-go
+      -
+        name: Setup Golang
+        id: setup-go
+        # You may pin to the exact commit or the version.
+        # uses: https://github.com/actions/setup-go/tags
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GOLANG_VERSION }}
+
+      # This action allows caching dependencies and build outputs to improve workflow execution time.
+      # https://github.com/actions/cache
+      -
+        name: Cache Go Modules
+        id: cache-go
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      # A GitHub Action for golang tests
+      -
+        name: Golang Tests
+        id: go-tests
+        run: |
+          go version
+          rm -rf example
+          go test -v -race -covermode=atomic -coverprofile=coverage.out ./...
+          go tool cover -html=coverage.out -o coverage.html
