@@ -25,18 +25,8 @@ make test
 - If your patch is not getting reviewed or you need a specific person to review it, you can @-reply a reviewer asking for a review in the pull request or a comment.
 - Add tests relevant to the fixed bug or new feature.
 - Update the README.md with details of changes to the interface, this includes new environment variables, exposed ports, useful file locations and container parameters.
-- Add prefix `[major]`, `[minor]`, `[patch]` or `[skip]` in the PR title for releasing.
-- Please use `Squash and merge` to merge a PR and double-confirm the merging message.
-- Merging PR to master will increase the version no. and create a new release automatically.
-    - The new version no. depends on the commit message prefix when new PRs is merged to master branch.
-    - Commit message prefix and release tag reference table:
-        | **Commit Msg Prefix** | **New Version No.**  | **Release `latest` Tag** | **Release `nightly` Tag** |
-        |:---------------------:|:--------------------:|:------------------------:|:-------------------------:|
-        | `[major] *`           | `v1.2.3` => `v2.0.0` | ✅                        | ✅                         |
-        | `[minor] *`           | `v1.2.3` => `v1.3.0` | ✅                        | ✅                         |
-        | `[patch] *`           | `v1.2.3` => `v1.2.4` | ✅                        | ✅                         |
-        | `[skip] *`            | ❌                    | ❌                        | ✅                         |
-        - Other prefixes will cause the pipeline to **FAIL**❌.
+- Please use `Squash and merge` to merge a PR.
+- Create a git tag to make a release. Docker image with the `latest` tag will also be updated.
 
 ## Dependency management
 
