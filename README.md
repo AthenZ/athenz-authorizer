@@ -1,13 +1,9 @@
 # Athenz authorizer
 
 [![License: Apache](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square)](https://opensource.org/licenses/Apache-2.0)
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/yahoojapan/athenz-authorizer?style=flat-square&label=Github%20version)](https://github.com/yahoojapan/athenz-authorizer/releases/latest)
-[![CircleCI](https://circleci.com/gh/yahoojapan/athenz-authorizer.svg)](https://circleci.com/gh/yahoojapan/athenz-authorizer)
-[![codecov](https://codecov.io/gh/yahoojapan/athenz-authorizer/branch/master/graph/badge.svg?token=2CzooNJtUu&style=flat-square)](https://codecov.io/gh/yahoojapan/athenz-authorizer)
-[![Go Report Card](https://goreportcard.com/badge/github.com/yahoojapan/athenz-authorizer)](https://goreportcard.com/report/github.com/yahoojapan/athenz-authorizer)
-[![GolangCI](https://golangci.com/badges/github.com/yahoojapan/athenz-authorizer.svg?style=flat-square)](https://golangci.com/r/github.com/yahoojapan/athenz-authorizer)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/828220605c43419e92fb0667876dd2d0)](https://www.codacy.com/app/i.can.feel.gravity/athenz-authorizer?utm_source=github.com&utm_medium=referral&utm_content=yahoojapan/athenz-authorizer&utm_campaign=Badge_Grade)
-[![GoDoc](http://godoc.org/github.com/yahoojapan/athenz-authorizer?status.svg)](http://godoc.org/github.com/yahoojapan/athenz-authorizer)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/AthenZ/athenz-authorizer?style=flat-square&label=Github%20version)](https://github.com/AthenZ/athenz-authorizer/releases/latest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/AthenZ/athenz-authorizer)](https://goreportcard.com/report/github.com/AthenZ/athenz-authorizer)
+[![GoDoc](http://godoc.org/github.com/AthenZ/athenz-authorizer?status.svg)](http://godoc.org/github.com/AthenZ/athenz-authorizer)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](code_of_conduct.md)
 
 <!-- TOC insertAnchor:false -->
@@ -45,7 +41,7 @@ import (
     "encoding/pem"
     "log"
 
-    authorizerd "github.com/yahoojapan/athenz-authorizer/v5"
+    authorizerd "github.com/AthenZ/athenz-authorizer/v5"
 )
 
 func main() {
@@ -186,12 +182,12 @@ limitations under the License.
 
 This project requires contributors to agree to a [Contributor License Agreement (CLA)](https://gist.github.com/ydnjp/3095832f100d5c3d2592).
 
-Note that only for contributions to the `athenz-authorizer` repository on the [GitHub](https://github.com/yahoojapan/athenz-authorizer), the contributors of them shall be deemed to have agreed to the CLA without individual written agreements.
+Note that only for contributions to the `athenz-authorizer` repository on the [GitHub](https://github.com/AthenZ/athenz-authorizer), the contributors of them shall be deemed to have agreed to the CLA without individual written agreements.
 
 ## About releases
 
 - Releases
-    - [![GitHub release (latest by date)](https://img.shields.io/github/v/release/yahoojapan/athenz-authorizer?style=flat-square&label=Github%20version)](https://github.com/yahoojapan/athenz-authorizer/releases/latest)
+    - [![GitHub release (latest by date)](https://img.shields.io/github/v/release/AthenZ/athenz-authorizer?style=flat-square&label=Github%20version)](https://github.com/AthenZ/athenz-authorizer/releases/latest)
 
 ## Authors
 

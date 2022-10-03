@@ -27,12 +27,12 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/AthenZ/athenz-authorizer/v5/pubkey"
 	"github.com/AthenZ/athenz/utils/zpe-updater/util"
 	"github.com/kpango/fastime"
 	"github.com/kpango/gache"
 	"github.com/kpango/glg"
 	"github.com/pkg/errors"
-	"github.com/yahoojapan/athenz-authorizer/v5/pubkey"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -232,7 +232,9 @@ func (p *policyd) CheckPolicyRoles(ctx context.Context, domain string, roles []s
 
 		wg := new(sync.WaitGroup)
 		wg.Add(len(roles))
-		rp := *p.rolePolicies
+
+		curRpPtrPtr := (*unsafe.Pointer)(unsafe.Pointer(&p.rolePolicies))
+		rp := *(*gache.Gache)(atomic.LoadPointer(curRpPtrPtr))
 
 		for _, role := range roles {
 			dr := fmt.Sprintf("%s:role.%s", domain, role)
@@ -289,7 +291,9 @@ func (p *policyd) CheckPolicyRoles(ctx context.Context, domain string, roles []s
 
 // GetPolicyCache returns the cached role policy data
 func (p *policyd) GetPolicyCache(ctx context.Context) map[string]interface{} {
-	return (*p.rolePolicies).ToRawMap(ctx)
+	curRpPtrPtr := (*unsafe.Pointer)(unsafe.Pointer(&p.rolePolicies))
+	rp := *(*gache.Gache)(atomic.LoadPointer(curRpPtrPtr))
+	return rp.ToRawMap(ctx)
 }
 
 func fetchAndCachePolicy(ctx context.Context, g gache.Gache, f Fetcher) error {

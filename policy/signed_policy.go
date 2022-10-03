@@ -23,8 +23,8 @@ import (
 	"github.com/kpango/fastime"
 	"github.com/pkg/errors"
 
+	"github.com/AthenZ/athenz-authorizer/v5/pubkey"
 	"github.com/AthenZ/athenz/utils/zpe-updater/util"
-	"github.com/yahoojapan/athenz-authorizer/v5/pubkey"
 )
 
 // SignedPolicy represents the signed policy data

@@ -15,7 +15,6 @@ clean:
 	rm -rf pprof
 	rm -rf vendor
 
-
 bench: clean init
 	go test -count=5 -run=NONE -bench . -benchmem
 
