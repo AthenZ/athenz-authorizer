@@ -19,8 +19,8 @@ package access
 import (
 	"time"
 
+	"github.com/AthenZ/athenz-authorizer/v5/jwk"
 	"github.com/pkg/errors"
-	"github.com/yahoojapan/athenz-authorizer/v5/jwk"
 )
 
 var (

@@ -27,6 +27,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AthenZ/athenz-authorizer/v5/pubkey"
 	"github.com/AthenZ/athenz/utils/zpe-updater/util"
 	"github.com/ardielle/ardielle-go/rdl"
 	"github.com/google/go-cmp/cmp"
@@ -34,7 +35,6 @@ import (
 	"github.com/kpango/fastime"
 	"github.com/kpango/gache"
 	"github.com/pkg/errors"
-	"github.com/yahoojapan/athenz-authorizer/v5/pubkey"
 )
 
 func newGache() *gache.Gache {

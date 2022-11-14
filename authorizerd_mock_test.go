@@ -20,11 +20,11 @@ import (
 	"crypto/x509"
 	"time"
 
+	"github.com/AthenZ/athenz-authorizer/v5/access"
+	"github.com/AthenZ/athenz-authorizer/v5/jwk"
+	"github.com/AthenZ/athenz-authorizer/v5/pubkey"
+	"github.com/AthenZ/athenz-authorizer/v5/role"
 	"github.com/pkg/errors"
-	"github.com/yahoojapan/athenz-authorizer/v5/access"
-	"github.com/yahoojapan/athenz-authorizer/v5/jwk"
-	"github.com/yahoojapan/athenz-authorizer/v5/pubkey"
-	"github.com/yahoojapan/athenz-authorizer/v5/role"
 )
 
 type ConfdMock struct {
