@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"sync"
 	"time"
@@ -273,7 +272,7 @@ func (p *pubkeyd) fetchPubKeyEntries(ctx context.Context, env AthenzEnv) (*SysAu
 		return nil, false, errors.Wrap(err, "json format not correct")
 	}
 
-	if _, err = io.Copy(ioutil.Discard, r.Body); err != nil {
+	if _, err = io.Copy(io.Discard, r.Body); err != nil {
 		glg.Warn(errors.Wrap(err, "error io.copy"))
 	}
 	if err = r.Body.Close(); err != nil {

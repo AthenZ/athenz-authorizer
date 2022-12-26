@@ -21,6 +21,7 @@
 - [Authors](#authors)
 
 <!-- /TOC -->
+<!--markdownlint-disable MD013-->
 
 ## What is Athenz authorizer
 

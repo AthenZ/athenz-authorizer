@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"sync/atomic"
 	"time"
@@ -187,7 +186,7 @@ func (t *taggedPolicy) String() string {
 func flushAndClose(rc io.ReadCloser) error {
 	if rc != nil {
 		// flush
-		_, err := io.Copy(ioutil.Discard, rc)
+		_, err := io.Copy(io.Discard, rc)
 		if err != nil {
 			return err
 		}

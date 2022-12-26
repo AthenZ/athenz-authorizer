@@ -18,22 +18,21 @@ package access
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 )
 
 type BaseClaim struct {
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 // Valid is copy from source code, and changed c.VerifyExpiresAt parameter.
 func (c *BaseClaim) Valid() error {
 	vErr := new(jwt.ValidationError)
-	now := jwt.TimeFunc().Unix()
+	now := jwt.TimeFunc()
 
 	if !c.VerifyExpiresAt(now, true) {
-		delta := time.Unix(now, 0).Sub(time.Unix(c.ExpiresAt, 0))
+		delta := now.Sub(c.ExpiresAt.Time)
 		vErr.Inner = fmt.Errorf("token is expired by %v", delta)
 		vErr.Errors |= jwt.ValidationErrorExpired
 	}

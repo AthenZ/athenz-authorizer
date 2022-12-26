@@ -21,8 +21,8 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"io/ioutil"
 	"net/url"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -269,7 +269,7 @@ func Test_rtp_ParseAndValidateOAuth2AccessToken(t *testing.T) {
 	}
 
 	LoadRSAPublicKeyFromDisk := func(location string) *rsa.PublicKey {
-		keyData, e := ioutil.ReadFile(location)
+		keyData, e := os.ReadFile(location)
 		if e != nil {
 			panic(e.Error())
 		}
@@ -281,7 +281,7 @@ func Test_rtp_ParseAndValidateOAuth2AccessToken(t *testing.T) {
 	}
 
 	LoadX509CertFromDisk := func(location string) *x509.Certificate {
-		certData, e := ioutil.ReadFile(location)
+		certData, e := os.ReadFile(location)
 		if e != nil {
 			panic(e.Error())
 		}
@@ -311,12 +311,12 @@ func Test_rtp_ParseAndValidateOAuth2AccessToken(t *testing.T) {
 				want: func() *OAuth2AccessTokenClaim {
 					c := OAuth2AccessTokenClaim{
 						BaseClaim: BaseClaim{
-							StandardClaims: jwt.StandardClaims{
+							RegisteredClaims: jwt.RegisteredClaims{
 								Subject:   "domain.tenant.service",
-								IssuedAt:  1584513441,
-								ExpiresAt: 9999999999,
+								IssuedAt:  jwt.NewNumericDate(time.Unix(1584513441, 0)),
+								ExpiresAt: jwt.NewNumericDate(time.Unix(9999999999, 0)),
 								Issuer:    "https://zts.athenz.io",
-								Audience:  "domain.provider",
+								Audience:  jwt.ClaimStrings{"domain.provider"},
 							},
 						},
 						AuthTime: 1584513441,
@@ -353,12 +353,12 @@ func Test_rtp_ParseAndValidateOAuth2AccessToken(t *testing.T) {
 				want: func() *OAuth2AccessTokenClaim {
 					c := OAuth2AccessTokenClaim{
 						BaseClaim: BaseClaim{
-							StandardClaims: jwt.StandardClaims{
+							RegisteredClaims: jwt.RegisteredClaims{
 								Subject:   "domain.tenant.service",
-								IssuedAt:  1585122381,
-								ExpiresAt: 9999999999,
+								IssuedAt:  jwt.NewNumericDate(time.Unix(1585122381, 0)),
+								ExpiresAt: jwt.NewNumericDate(time.Unix(9999999999, 0)),
 								Issuer:    "https://zts.athenz.io",
-								Audience:  "domain.provider",
+								Audience:  jwt.ClaimStrings{"domain.provider"},
 							},
 						},
 						AuthTime: 1585122381,
@@ -390,12 +390,12 @@ func Test_rtp_ParseAndValidateOAuth2AccessToken(t *testing.T) {
 				want: func() *OAuth2AccessTokenClaim {
 					c := OAuth2AccessTokenClaim{
 						BaseClaim: BaseClaim{
-							StandardClaims: jwt.StandardClaims{
+							RegisteredClaims: jwt.RegisteredClaims{
 								Subject:   "domain.tenant.service",
-								IssuedAt:  1585122381,
-								ExpiresAt: 9999999999,
+								IssuedAt:  jwt.NewNumericDate(time.Unix(1585122381, 0)),
+								ExpiresAt: jwt.NewNumericDate(time.Unix(9999999999, 0)),
 								Issuer:    "https://zts.athenz.io",
-								Audience:  "domain.provider",
+								Audience:  jwt.ClaimStrings{"domain.provider"},
 							},
 						},
 						AuthTime: 1585122381,
@@ -777,7 +777,7 @@ func Test_rtp_validateCertificateBoundAccessToken(t *testing.T) {
 	}
 
 	LoadX509CertFromDisk := func(location string) *x509.Certificate {
-		certData, e := ioutil.ReadFile(location)
+		certData, e := os.ReadFile(location)
 		if e != nil {
 			panic(e.Error())
 		}
@@ -808,12 +808,12 @@ func Test_rtp_validateCertificateBoundAccessToken(t *testing.T) {
 				}(),
 				claims: &OAuth2AccessTokenClaim{
 					BaseClaim: BaseClaim{
-						StandardClaims: jwt.StandardClaims{
+						RegisteredClaims: jwt.RegisteredClaims{
 							Subject:   "domain.tenant.service",
-							IssuedAt:  1585122381,
-							ExpiresAt: 9999999999,
+							IssuedAt:  jwt.NewNumericDate(time.Unix(1585122381, 0)),
+							ExpiresAt: jwt.NewNumericDate(time.Unix(9999999999, 0)),
 							Issuer:    "https://zts.athenz.io",
-							Audience:  "domain.provider",
+							Audience:  jwt.ClaimStrings{"domain.provider"},
 						},
 					},
 					AuthTime: 1585122381,
@@ -843,12 +843,12 @@ func Test_rtp_validateCertificateBoundAccessToken(t *testing.T) {
 				},
 				claims: &OAuth2AccessTokenClaim{
 					BaseClaim: BaseClaim{
-						StandardClaims: jwt.StandardClaims{
+						RegisteredClaims: jwt.RegisteredClaims{
 							Subject:   "domain.tenant.service",
-							IssuedAt:  1585122381,
-							ExpiresAt: 9999999999,
+							IssuedAt:  jwt.NewNumericDate(time.Unix(1585122381, 0)),
+							ExpiresAt: jwt.NewNumericDate(time.Unix(9999999999, 0)),
 							Issuer:    "https://zts.athenz.io",
-							Audience:  "domain.provider",
+							Audience:  jwt.ClaimStrings{"domain.provider"},
 						},
 					},
 					AuthTime: 1585122381,
@@ -887,12 +887,12 @@ func Test_rtp_validateCertificateBoundAccessToken(t *testing.T) {
 				},
 				claims: &OAuth2AccessTokenClaim{
 					BaseClaim: BaseClaim{
-						StandardClaims: jwt.StandardClaims{
+						RegisteredClaims: jwt.RegisteredClaims{
 							Subject:   "domain.tenant.service",
-							IssuedAt:  1585122381,
-							ExpiresAt: 9999999999,
+							IssuedAt:  jwt.NewNumericDate(time.Unix(1585122381, 0)),
+							ExpiresAt: jwt.NewNumericDate(time.Unix(9999999999, 0)),
 							Issuer:    "https://zts.athenz.io",
-							Audience:  "domain.provider",
+							Audience:  jwt.ClaimStrings{"domain.provider"},
 						},
 					},
 					AuthTime: 1585122381,
@@ -919,12 +919,12 @@ func Test_rtp_validateCertificateBoundAccessToken(t *testing.T) {
 				cert: nil,
 				claims: &OAuth2AccessTokenClaim{
 					BaseClaim: BaseClaim{
-						StandardClaims: jwt.StandardClaims{
+						RegisteredClaims: jwt.RegisteredClaims{
 							Subject:   "domain.tenant.service",
-							IssuedAt:  1585122381,
-							ExpiresAt: 9999999999,
+							IssuedAt:  jwt.NewNumericDate(time.Unix(1585122381, 0)),
+							ExpiresAt: jwt.NewNumericDate(time.Unix(9999999999, 0)),
 							Issuer:    "https://zts.athenz.io",
-							Audience:  "domain.provider",
+							Audience:  jwt.ClaimStrings{"domain.provider"},
 						},
 					},
 					AuthTime: 1585122381,
@@ -959,12 +959,12 @@ func Test_rtp_validateCertificateBoundAccessToken(t *testing.T) {
 				}(),
 				claims: &OAuth2AccessTokenClaim{
 					BaseClaim: BaseClaim{
-						StandardClaims: jwt.StandardClaims{
+						RegisteredClaims: jwt.RegisteredClaims{
 							Subject:   "domain.tenant.service",
-							IssuedAt:  1585122381,
-							ExpiresAt: 9999999999,
+							IssuedAt:  jwt.NewNumericDate(time.Unix(1585122381, 0)),
+							ExpiresAt: jwt.NewNumericDate(time.Unix(9999999999, 0)),
 							Issuer:    "https://zts.athenz.io",
-							Audience:  "domain.provider",
+							Audience:  jwt.ClaimStrings{"domain.provider"},
 						},
 					},
 					AuthTime: 1585122381,
@@ -988,12 +988,12 @@ func Test_rtp_validateCertificateBoundAccessToken(t *testing.T) {
 				}(),
 				claims: &OAuth2AccessTokenClaim{
 					BaseClaim: BaseClaim{
-						StandardClaims: jwt.StandardClaims{
+						RegisteredClaims: jwt.RegisteredClaims{
 							Subject:   "domain.tenant.service",
-							IssuedAt:  1585122381,
-							ExpiresAt: 9999999999,
+							IssuedAt:  jwt.NewNumericDate(time.Unix(1585122381, 0)),
+							ExpiresAt: jwt.NewNumericDate(time.Unix(9999999999, 0)),
 							Issuer:    "https://zts.athenz.io",
-							Audience:  "domain.provider",
+							Audience:  jwt.ClaimStrings{"domain.provider"},
 						},
 					},
 					AuthTime: 1585122381,
@@ -1021,12 +1021,12 @@ func Test_rtp_validateCertificateBoundAccessToken(t *testing.T) {
 				},
 				claims: &OAuth2AccessTokenClaim{
 					BaseClaim: BaseClaim{
-						StandardClaims: jwt.StandardClaims{
+						RegisteredClaims: jwt.RegisteredClaims{
 							Subject:   "domain.tenant.service",
-							IssuedAt:  1585122381,
-							ExpiresAt: 9999999999,
+							IssuedAt:  jwt.NewNumericDate(time.Unix(1585122381, 0)),
+							ExpiresAt: jwt.NewNumericDate(time.Unix(9999999999, 0)),
 							Issuer:    "https://zts.athenz.io",
-							Audience:  "domain.provider",
+							Audience:  jwt.ClaimStrings{"domain.provider"},
 						},
 					},
 					AuthTime: 1585122381,
@@ -1093,12 +1093,12 @@ func Test_rtp_validateCertPrincipal(t *testing.T) {
 				},
 				claims: &OAuth2AccessTokenClaim{
 					BaseClaim: BaseClaim{
-						StandardClaims: jwt.StandardClaims{
+						RegisteredClaims: jwt.RegisteredClaims{
 							Subject:   "domain.tenant.service",
-							IssuedAt:  1585122381,
-							ExpiresAt: 9999999999,
+							IssuedAt:  jwt.NewNumericDate(time.Unix(1585122381, 0)),
+							ExpiresAt: jwt.NewNumericDate(time.Unix(9999999999, 0)),
 							Issuer:    "https://zts.athenz.io",
-							Audience:  "domain.provider",
+							Audience:  jwt.ClaimStrings{"domain.provider"},
 						},
 					},
 					ClientID: "domain.tenant.service",
@@ -1123,12 +1123,12 @@ func Test_rtp_validateCertPrincipal(t *testing.T) {
 				},
 				claims: &OAuth2AccessTokenClaim{
 					BaseClaim: BaseClaim{
-						StandardClaims: jwt.StandardClaims{
+						RegisteredClaims: jwt.RegisteredClaims{
 							Subject:   "domain.tenant.service",
-							IssuedAt:  1585122381,
-							ExpiresAt: 9999999999,
+							IssuedAt:  jwt.NewNumericDate(time.Unix(1585122381, 0)),
+							ExpiresAt: jwt.NewNumericDate(time.Unix(9999999999, 0)),
 							Issuer:    "https://zts.athenz.io",
-							Audience:  "domain.provider",
+							Audience:  jwt.ClaimStrings{"domain.provider"},
 						},
 					},
 					ClientID: "domain.tenant.service",
@@ -1150,12 +1150,12 @@ func Test_rtp_validateCertPrincipal(t *testing.T) {
 				},
 				claims: &OAuth2AccessTokenClaim{
 					BaseClaim: BaseClaim{
-						StandardClaims: jwt.StandardClaims{
+						RegisteredClaims: jwt.RegisteredClaims{
 							Subject:   "domain.tenant.service",
-							IssuedAt:  1585122381,
-							ExpiresAt: 9999999999,
+							IssuedAt:  jwt.NewNumericDate(time.Unix(1585122381, 0)),
+							ExpiresAt: jwt.NewNumericDate(time.Unix(9999999999, 0)),
 							Issuer:    "https://zts.athenz.io",
-							Audience:  "domain.provider",
+							Audience:  jwt.ClaimStrings{"domain.provider"},
 						},
 					},
 					ClientID: "domain.tenant.service",
@@ -1235,8 +1235,8 @@ func Test_rtp_validateCertPrincipal(t *testing.T) {
 				claims: &OAuth2AccessTokenClaim{
 					ClientID: "domain.tenant.service",
 					BaseClaim: BaseClaim{
-						StandardClaims: jwt.StandardClaims{
-							IssuedAt: 1585122381,
+						RegisteredClaims: jwt.RegisteredClaims{
+							IssuedAt: jwt.NewNumericDate(time.Unix(1585122381, 0)),
 						},
 					},
 				},
@@ -1261,8 +1261,8 @@ func Test_rtp_validateCertPrincipal(t *testing.T) {
 				claims: &OAuth2AccessTokenClaim{
 					ClientID: "domain.tenant.service",
 					BaseClaim: BaseClaim{
-						StandardClaims: jwt.StandardClaims{
-							IssuedAt: 1585122381,
+						RegisteredClaims: jwt.RegisteredClaims{
+							IssuedAt: jwt.NewNumericDate(time.Unix(1585122381, 0)),
 						},
 					},
 				},
