@@ -625,8 +625,8 @@ func Test_rtp_validateClientID(t *testing.T) {
 		enableMTLSCertificateBoundAccessToken bool
 		enableVerifyClientID                  bool
 		authorizedClientIDs                   map[string][]string
-		clientCertificateGoBackSeconds        int64
-		clientCertificateOffsetSeconds        int64
+		clientCertificateGoBackSeconds        time.Duration
+		clientCertificateOffsetSeconds        time.Duration
 	}
 	type args struct {
 		cert   *x509.Certificate
@@ -768,8 +768,8 @@ func Test_rtp_validateCertificateBoundAccessToken(t *testing.T) {
 	type fields struct {
 		jwkp                                  jwk.Provider
 		enableMTLSCertificateBoundAccessToken bool
-		clientCertificateGoBackSeconds        int64
-		clientCertificateOffsetSeconds        int64
+		clientCertificateGoBackSeconds        time.Duration
+		clientCertificateOffsetSeconds        time.Duration
 	}
 	type args struct {
 		cert   *x509.Certificate
@@ -830,7 +830,7 @@ func Test_rtp_validateCertificateBoundAccessToken(t *testing.T) {
 			name: "verify certificate bound access token success, refreshed certificate",
 			fields: fields{
 				enableMTLSCertificateBoundAccessToken: true,
-				clientCertificateOffsetSeconds:        3600,
+				clientCertificateOffsetSeconds:        3600 * time.Second,
 			},
 			args: args{
 				cert: &x509.Certificate{
@@ -865,7 +865,7 @@ func Test_rtp_validateCertificateBoundAccessToken(t *testing.T) {
 			name: "verify certificate bound access token success, proxy-principals certificate",
 			fields: fields{
 				enableMTLSCertificateBoundAccessToken: true,
-				clientCertificateOffsetSeconds:        3600,
+				clientCertificateOffsetSeconds:        3600 * time.Second,
 			},
 			args: args{
 				cert: &x509.Certificate{
@@ -1063,8 +1063,8 @@ func Test_rtp_validateCertPrincipal(t *testing.T) {
 	type fields struct {
 		jwkp                                  jwk.Provider
 		enableMTLSCertificateBoundAccessToken bool
-		clientCertificateGoBackSeconds        int64
-		clientCertificateOffsetSeconds        int64
+		clientCertificateGoBackSeconds        time.Duration
+		clientCertificateOffsetSeconds        time.Duration
 	}
 	type args struct {
 		cert   *x509.Certificate
@@ -1080,7 +1080,7 @@ func Test_rtp_validateCertPrincipal(t *testing.T) {
 			name: "verify cert principal success",
 			fields: fields{
 				enableMTLSCertificateBoundAccessToken: true,
-				clientCertificateOffsetSeconds:        3600,
+				clientCertificateOffsetSeconds:        3600 * time.Second,
 			},
 			args: args{
 				cert: &x509.Certificate{
@@ -1110,7 +1110,7 @@ func Test_rtp_validateCertPrincipal(t *testing.T) {
 			name: "verify cert principal success, token and certificate are issued at same time",
 			fields: fields{
 				enableMTLSCertificateBoundAccessToken: true,
-				clientCertificateOffsetSeconds:        3600,
+				clientCertificateOffsetSeconds:        3600 * time.Second,
 			},
 			args: args{
 				cert: &x509.Certificate{
@@ -1140,7 +1140,7 @@ func Test_rtp_validateCertPrincipal(t *testing.T) {
 			name: "verify cert principal fail, CommonName is nil",
 			fields: fields{
 				enableMTLSCertificateBoundAccessToken: true,
-				clientCertificateOffsetSeconds:        3600,
+				clientCertificateOffsetSeconds:        3600 * time.Second,
 			},
 			args: args{
 				cert: &x509.Certificate{
@@ -1168,7 +1168,7 @@ func Test_rtp_validateCertPrincipal(t *testing.T) {
 			name: "verify cert principal fail, CommonName is empty",
 			fields: fields{
 				enableMTLSCertificateBoundAccessToken: true,
-				clientCertificateOffsetSeconds:        3600,
+				clientCertificateOffsetSeconds:        3600 * time.Second,
 			},
 			args: args{
 				cert: &x509.Certificate{
@@ -1186,7 +1186,7 @@ func Test_rtp_validateCertPrincipal(t *testing.T) {
 			name: "verify cert principal fail, ClientID is empty",
 			fields: fields{
 				enableMTLSCertificateBoundAccessToken: true,
-				clientCertificateOffsetSeconds:        3600,
+				clientCertificateOffsetSeconds:        3600 * time.Second,
 			},
 			args: args{
 				cert: &x509.Certificate{
@@ -1204,7 +1204,7 @@ func Test_rtp_validateCertPrincipal(t *testing.T) {
 			name: "verify cert principal fail, principal mismatch",
 			fields: fields{
 				enableMTLSCertificateBoundAccessToken: true,
-				clientCertificateOffsetSeconds:        3600,
+				clientCertificateOffsetSeconds:        3600 * time.Second,
 			},
 			args: args{
 				cert: &x509.Certificate{
@@ -1222,8 +1222,8 @@ func Test_rtp_validateCertPrincipal(t *testing.T) {
 			name: "verify cert principal fail, certificate that was generated before the token",
 			fields: fields{
 				enableMTLSCertificateBoundAccessToken: true,
-				clientCertificateGoBackSeconds:        3600,
-				clientCertificateOffsetSeconds:        3600,
+				clientCertificateGoBackSeconds:        3600 * time.Second,
+				clientCertificateOffsetSeconds:        3600 * time.Second,
 			},
 			args: args{
 				cert: &x509.Certificate{
@@ -1248,8 +1248,8 @@ func Test_rtp_validateCertPrincipal(t *testing.T) {
 			name: "verify cert principal fail, certificate that was generated after the clientCertificateOffsetSeconds",
 			fields: fields{
 				enableMTLSCertificateBoundAccessToken: true,
-				clientCertificateGoBackSeconds:        3600,
-				clientCertificateOffsetSeconds:        3600,
+				clientCertificateGoBackSeconds:        3600 * time.Second,
+				clientCertificateOffsetSeconds:        3600 * time.Second,
 			},
 			args: args{
 				cert: &x509.Certificate{

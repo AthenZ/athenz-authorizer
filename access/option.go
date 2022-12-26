@@ -72,7 +72,7 @@ func WithClientCertificateGoBackSeconds(t string) Option {
 		if err != nil {
 			return errors.Wrap(err, "invalid refresh period")
 		}
-		r.clientCertificateGoBackSeconds = int64(rd.Seconds())
+		r.clientCertificateGoBackSeconds = rd
 		return nil
 	}
 }
@@ -87,7 +87,7 @@ func WithClientCertificateOffsetSeconds(t string) Option {
 		if err != nil {
 			return errors.Wrap(err, "invalid offset duration")
 		}
-		r.clientCertificateOffsetSeconds = int64(rd.Seconds())
+		r.clientCertificateOffsetSeconds = rd
 		return nil
 	}
 }

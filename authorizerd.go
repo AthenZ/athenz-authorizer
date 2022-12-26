@@ -426,15 +426,15 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 			glg.Infof("error parse and validate access token, err: %v", err)
 			return nil, errors.Wrap(err, "error authorize access token")
 		}
-		domain = ac.Audience
+		domain = ac.Audience[0]
 		roles = ac.Scope
 		p = &oAuthAccessToken{
 			principal: principal{
 				name:       ac.Subject,
 				roles:      ac.Scope,
-				domain:     ac.Audience,
-				issueTime:  ac.IssuedAt,
-				expiryTime: ac.ExpiresAt,
+				domain:     ac.Audience[0],
+				issueTime:  ac.IssuedAt.Time.Unix(),
+				expiryTime: ac.ExpiresAt.Time.Unix(),
 			},
 			clientID: ac.ClientID,
 		}

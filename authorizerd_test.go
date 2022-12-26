@@ -1794,7 +1794,9 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 				Scope: []string{"role"},
 				BaseClaim: access.BaseClaim{
 					RegisteredClaims: jwt.RegisteredClaims{
-						Audience: "domain",
+						Audience:  jwt.ClaimStrings{"domain"},
+						IssuedAt:  jwt.NewNumericDate(time.Unix(0, 0)),
+						ExpiresAt: jwt.NewNumericDate(time.Unix(9999999999, 0)),
 					},
 				},
 			}
@@ -1802,9 +1804,9 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 				principal: principal{
 					name:            at.BaseClaim.Subject,
 					roles:           at.Scope,
-					domain:          at.BaseClaim.Audience,
-					issueTime:       at.IssuedAt,
-					expiryTime:      at.ExpiresAt,
+					domain:          at.BaseClaim.Audience[0],
+					issueTime:       at.IssuedAt.Time.Unix(),
+					expiryTime:      at.ExpiresAt.Time.Unix(),
 					authorizedRoles: []string{"role"},
 				},
 				clientID: at.ClientID,
@@ -1857,7 +1859,9 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 				Scope: []string{"role"},
 				BaseClaim: access.BaseClaim{
 					RegisteredClaims: jwt.RegisteredClaims{
-						Audience: "domain",
+						Audience:  jwt.ClaimStrings{"domain"},
+						IssuedAt:  jwt.NewNumericDate(time.Unix(0, 0)),
+						ExpiresAt: jwt.NewNumericDate(time.Unix(9999999999, 0)),
 					},
 				},
 			}
@@ -1865,9 +1869,9 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 				principal: principal{
 					name:            at.BaseClaim.Subject,
 					roles:           at.Scope,
-					domain:          at.BaseClaim.Audience,
-					issueTime:       at.IssuedAt,
-					expiryTime:      at.ExpiresAt,
+					domain:          at.BaseClaim.Audience[0],
+					issueTime:       at.IssuedAt.Time.Unix(),
+					expiryTime:      at.ExpiresAt.Time.Unix(),
 					authorizedRoles: []string{"role"},
 				},
 				clientID: at.ClientID,
@@ -1928,11 +1932,8 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 			at := &access.OAuth2AccessTokenClaim{}
 			p := &oAuthAccessToken{
 				principal: principal{
-					name:       at.BaseClaim.Subject,
-					roles:      at.Scope,
-					domain:     at.BaseClaim.Audience,
-					issueTime:  at.IssuedAt,
-					expiryTime: at.ExpiresAt,
+					name:  at.BaseClaim.Subject,
+					roles: at.Scope,
 				},
 				clientID: at.ClientID,
 			}
@@ -1992,11 +1993,8 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 			at := &access.OAuth2AccessTokenClaim{}
 			p := &oAuthAccessToken{
 				principal: principal{
-					name:       at.BaseClaim.Subject,
-					roles:      at.Scope,
-					domain:     at.BaseClaim.Audience,
-					issueTime:  at.IssuedAt,
-					expiryTime: at.ExpiresAt,
+					name:  at.BaseClaim.Subject,
+					roles: at.Scope,
 				},
 				clientID: at.ClientID,
 			}
@@ -2119,7 +2117,15 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 		func() test {
 			c := gache.New()
 			apm := &AccessProcessorMock{
-				atc: &access.OAuth2AccessTokenClaim{},
+				atc: &access.OAuth2AccessTokenClaim{
+					BaseClaim: access.BaseClaim{
+						RegisteredClaims: jwt.RegisteredClaims{
+							Audience:  jwt.ClaimStrings{"domain"},
+							IssuedAt:  jwt.NewNumericDate(time.Unix(0, 0)),
+							ExpiresAt: jwt.NewNumericDate(time.Unix(9999999999, 0)),
+						},
+					},
+				},
 			}
 			pdm := &PolicydMock{
 				CheckPolicyRoleFunc: func(context.Context, string, []string, string, string) ([]string, error) {
@@ -2158,7 +2164,9 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 				Scope: []string{"role"},
 				BaseClaim: access.BaseClaim{
 					RegisteredClaims: jwt.RegisteredClaims{
-						Audience: "domain",
+						Audience:  jwt.ClaimStrings{"domain"},
+						IssuedAt:  jwt.NewNumericDate(time.Unix(0, 0)),
+						ExpiresAt: jwt.NewNumericDate(time.Unix(9999999999, 0)),
 					},
 				},
 			}
@@ -2166,9 +2174,9 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 				principal: principal{
 					name:            at.BaseClaim.Subject,
 					roles:           at.Scope,
-					domain:          at.BaseClaim.Audience,
-					issueTime:       at.IssuedAt,
-					expiryTime:      at.ExpiresAt,
+					domain:          at.BaseClaim.Audience[0],
+					issueTime:       at.IssuedAt.Time.Unix(),
+					expiryTime:      at.ExpiresAt.Time.Unix(),
 					authorizedRoles: []string{"role"},
 				},
 				clientID: at.ClientID,
@@ -2229,11 +2237,8 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 			at := &access.OAuth2AccessTokenClaim{}
 			p := &oAuthAccessToken{
 				principal: principal{
-					name:       at.BaseClaim.Subject,
-					roles:      at.Scope,
-					domain:     at.BaseClaim.Audience,
-					issueTime:  at.IssuedAt,
-					expiryTime: at.ExpiresAt,
+					name:  at.BaseClaim.Subject,
+					roles: at.Scope,
 				},
 				clientID: at.ClientID,
 			}

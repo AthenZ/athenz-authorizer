@@ -32,8 +32,12 @@ func (c *BaseClaim) Valid() error {
 	now := jwt.TimeFunc()
 
 	if !c.VerifyExpiresAt(now, true) {
-		delta := now.Sub(c.ExpiresAt.Time)
-		vErr.Inner = fmt.Errorf("token is expired by %v", delta)
+		if c.ExpiresAt != nil {
+			delta := now.Sub(c.ExpiresAt.Time)
+			vErr.Inner = fmt.Errorf("token is expired by %v", delta)
+		} else {
+			vErr.Inner = fmt.Errorf("token is ExpiresAt is not set")
+		}
 		vErr.Errors |= jwt.ValidationErrorExpired
 	}
 

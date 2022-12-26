@@ -114,11 +114,11 @@ func TestNewAssertion(t *testing.T) {
 				Resource:       "*[res]?",
 				ResourceDomain: "dom",
 				ActionRegexp: func() *regexp.Regexp {
-					r, _ := regexp.Compile(`^.*\\[act].$`)
+					r, _ := regexp.Compile(`^.*\[act].$`)
 					return r
 				}(),
 				ResourceRegexp: func() *regexp.Regexp {
-					r, _ := regexp.Compile(`^.*\\[res].$`)
+					r, _ := regexp.Compile(`^.*\[res].$`)
 					return r
 				}(),
 				Effect:               nil,
@@ -158,7 +158,7 @@ func TestNewAssertion(t *testing.T) {
 					return r
 				}(),
 				ResourceRegexp: func() *regexp.Regexp {
-					r, _ := regexp.Compile(`^res\\($`)
+					r, _ := regexp.Compile(`^res\($`)
 					return r
 				}(),
 				Effect:               errors.New("policy deny: Access Check was explicitly denied"),
