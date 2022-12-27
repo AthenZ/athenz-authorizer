@@ -197,9 +197,9 @@ func Test_fetcher_Fetch(t *testing.T) {
 			}
 		})
 	}
-	createTestServer := func(hf http.HandlerFunc) (*httptest.Server, *http.Client, string) {
+	createTestServer := func(hf http.HandlerFunc) (*http.Client, string) {
 		srv := httptest.NewTLSServer(hf)
-		return srv, srv.Client(), strings.Replace(srv.URL, "https://", "", 1)
+		return srv.Client(), strings.Replace(srv.URL, "https://", "", 1)
 	}
 	createExpires := func(d time.Duration) (time.Time, string, error) {
 		t := fastime.Now().Add(d).UTC().Round(time.Millisecond)
@@ -236,7 +236,7 @@ func Test_fetcher_Fetch(t *testing.T) {
 			eTag := `"dummyEtag"`
 			zmsKeyID := "dummyZmsKeyId"
 			expires, expiresStr, err := createExpires(2 * expiryMargin)
-			_, client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+			client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
 				handleErr := func(err error) {
 					if err != nil {
 						w.WriteHeader(http.StatusInternalServerError)
@@ -316,7 +316,7 @@ func Test_fetcher_Fetch(t *testing.T) {
 			eTag := `"dummyEtag"`
 			zmsKeyID := "dummyZmsKeyId"
 			expires, expiresStr, err := createExpires(2 * expiryMargin)
-			_, client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+			client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
 				handleErr := func(err error) {
 					if err != nil {
 						w.WriteHeader(http.StatusInternalServerError)
@@ -397,7 +397,7 @@ func Test_fetcher_Fetch(t *testing.T) {
 			eTag := `"dummyEtag"`
 			zmsKeyID := "dummyZmsKeyId"
 			expires, expiresStr, err := createExpires(2 * expiryMargin)
-			_, client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+			client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
 				handleErr := func(err error) {
 					if err != nil {
 						w.WriteHeader(http.StatusInternalServerError)
@@ -479,7 +479,7 @@ func Test_fetcher_Fetch(t *testing.T) {
 			// http response
 			domain := "dummyDomain"
 			expiryMargin := time.Hour
-			_, client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+			client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
 				if r.URL.Path != "/domain/dummyDomain/signed_policy_data" {
 					w.WriteHeader(http.StatusInternalServerError)
 					return
@@ -543,7 +543,7 @@ func Test_fetcher_Fetch(t *testing.T) {
 			eTag := `"dummyEtag"`
 			zmsKeyID := "dummyZmsKeyId"
 			expires, expiresStr, err := createExpires(2 * expiryMargin)
-			_, client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+			client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
 				handleErr := func(err error) {
 					if err != nil {
 						w.WriteHeader(http.StatusInternalServerError)
@@ -625,7 +625,7 @@ func Test_fetcher_Fetch(t *testing.T) {
 			// http response
 			domain := "dummyDomain"
 			expiryMargin := time.Hour
-			_, client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+			client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
 				if r.URL.Path != "/domain/dummyDomain/signed_policy_data" {
 					w.WriteHeader(http.StatusInternalServerError)
 					return
@@ -709,7 +709,7 @@ func Test_fetcher_Fetch(t *testing.T) {
 
 			// http response
 			domain := "dummyDomain"
-			_, client, _ := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+			client, _ := createTestServer(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			})
 
@@ -737,7 +737,7 @@ func Test_fetcher_Fetch(t *testing.T) {
 
 			// http response
 			domain := "dummyDomain"
-			_, client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+			client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusInternalServerError)
 			})
 
@@ -765,7 +765,7 @@ func Test_fetcher_Fetch(t *testing.T) {
 
 			// http response
 			domain := "dummyDomain"
-			_, client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+			client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				_, err := w.Write([]byte(""))
 				if err != nil {
@@ -798,7 +798,7 @@ func Test_fetcher_Fetch(t *testing.T) {
 
 			// http response
 			domain := "dummyDomain"
-			_, client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+			client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
 				_, err := w.Write([]byte("{}"))
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
@@ -834,7 +834,7 @@ func Test_fetcher_Fetch(t *testing.T) {
 
 			// http response
 			domain := "dummyDomain"
-			_, client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+			client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
 				_, err := w.Write([]byte(`{"signedPolicyData":{}}`))
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
@@ -868,7 +868,7 @@ func Test_fetcher_Fetch(t *testing.T) {
 
 			// http response
 			domain := "dummyDomain"
-			_, client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+			client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
 				_, err := w.Write([]byte(`{"signedPolicyData":{"expires":"2099-12-31"}}`))
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
@@ -902,7 +902,7 @@ func Test_fetcher_Fetch(t *testing.T) {
 
 			// http response
 			domain := "dummyDomain"
-			_, client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+			client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
 				_, err := w.Write([]byte(`{"signedPolicyData":{"expires":"2006-01-02T15:04:05.999Z"}}`))
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
@@ -986,9 +986,9 @@ func Test_fetcher_FetchWithRetry(t *testing.T) {
 		wantErrStr      string
 		cmpTP           func(a, b *taggedPolicy) error
 	}
-	createTestServer := func(hf http.HandlerFunc) (*httptest.Server, *http.Client, string) {
+	createTestServer := func(hf http.HandlerFunc) (*http.Client, string) {
 		srv := httptest.NewTLSServer(hf)
-		return srv, srv.Client(), strings.Replace(srv.URL, "https://", "", 1)
+		return srv.Client(), strings.Replace(srv.URL, "https://", "", 1)
 	}
 	compareTaggedPolicy := func(a, b *taggedPolicy) error {
 		if a == b {
@@ -1018,7 +1018,7 @@ func Test_fetcher_FetchWithRetry(t *testing.T) {
 			retryDelay := time.Minute
 			retryAttempts := 0
 			keyID := "keyId"
-			_, client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+			client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Add("ETag", fmt.Sprintf(`"dummyEtag%d"`, atomic.AddUint32(&requestCount, 1)))
 				w.Header().Set("Content-Type", "application/json; charset=utf-8")
 				_, err := w.Write([]byte(fmt.Sprintf(`{"keyId":"%v","signedPolicyData":{"expires":""}}`, keyID)))
@@ -1080,7 +1080,7 @@ func Test_fetcher_FetchWithRetry(t *testing.T) {
 			retryDelay := 100 * time.Millisecond
 			retryAttempts := 2
 			keyID := "keyId"
-			_, client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+			client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
 				rc := atomic.AddUint32(&requestCount, 1)
 				if rc < 3 {
 					w.WriteHeader(http.StatusInternalServerError)
@@ -1158,7 +1158,7 @@ func Test_fetcher_FetchWithRetry(t *testing.T) {
 			expiryMargin := time.Hour
 			retryDelay := time.Millisecond
 			retryAttempts := 2
-			_, client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+			client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusInternalServerError)
 			})
 
@@ -1192,7 +1192,7 @@ func Test_fetcher_FetchWithRetry(t *testing.T) {
 			expiryMargin := time.Hour
 			retryDelay := time.Millisecond
 			retryAttempts := 2
-			_, client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
+			client, url := createTestServer(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusInternalServerError)
 			})
 

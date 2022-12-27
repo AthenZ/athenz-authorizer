@@ -33,13 +33,13 @@ const (
 	confirmMethodProxyPrincipals = "proxy-principals#spiffe"
 )
 
-// errNilHeader is "header is nil"
+// errNilHeader is "header is nil".
 var errNilHeader = errors.New("header is nil")
 
-// errKeyNotFoundInHeader is "key not written in header"
+// errKeyNotFoundInHeader is "key not written in header".
 var errKeyNotFoundInHeader = errors.New("key not written in header")
 
-// errHeaderValueNotString is "header value not written as string"
+// errHeaderValueNotString is "header value not written as string".
 var errHeaderValueNotString = errors.New("header value not written as string")
 
 // Processor represents the access token parser interface.
@@ -189,7 +189,7 @@ func (a *atp) validateCertPrincipal(cert *x509.Certificate, claims *OAuth2Access
 	return nil
 }
 
-// keyFunc extract the key id from the token, and return corresponding key
+// keyFunc extract the key id from the token, and return corresponding key.
 func (a *atp) keyFunc(token *jwt.Token) (interface{}, error) {
 	keyID, err := getAsStringFromHeader(&token.Header, jws.KeyIDKey)
 	// kid is required and will return if an error occurs

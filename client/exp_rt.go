@@ -98,7 +98,7 @@ func (p *ExponentialRoundTripper) calNextWaitDur(count int) time.Duration {
 }
 
 // sleep return false if ( Now + wait duration > time limit )
-// otherwise it return true
+// otherwise it return true.
 func canRetry(dur time.Duration, timeLimit int64) bool {
 	return fastime.Now().Add(dur).UnixNano() < timeLimit
 }

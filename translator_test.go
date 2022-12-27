@@ -682,7 +682,7 @@ func TestMappingRules_validate(t *testing.T) {
 					}
 					if !reflect.DeepEqual(rule.splitPaths, wantRules[i].splitPaths) ||
 						!reflect.DeepEqual(rule.queryValueMap, wantRules[i].queryValueMap) {
-						t.Errorf("wantMappingRules is not an expectaion")
+						t.Errorf("wantMappingRules is not an expectation")
 						return
 					}
 				}

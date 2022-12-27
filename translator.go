@@ -28,18 +28,18 @@ const (
 	placeholderSuffix = "}"
 )
 
-// Translator translates the information given to the argument to action and resource
+// Translator translates the information given to the argument to action and resource.
 type Translator interface {
 	Translate(domain, method, path, query string) (string, string, error)
 }
 
-// param keeps information after it has been validated
+// param keeps information after it has been validated.
 type param struct {
 	name          string
 	isPlaceholder bool
 }
 
-// Rule represents a rule for translation
+// Rule represents a rule for translation.
 type Rule struct {
 	Method        string `yaml:"method"`
 	Path          string `yaml:"path"`
@@ -49,12 +49,12 @@ type Rule struct {
 	queryValueMap map[string]param
 }
 
-// MappingRules keeps the translation rules
+// MappingRules keeps the translation rules.
 type MappingRules struct {
 	Rules map[string][]Rule
 }
 
-// NewMappingRules creates the MappingRules object
+// NewMappingRules creates the MappingRules object.
 func NewMappingRules(rules map[string][]Rule) (*MappingRules, error) {
 	if rules == nil {
 		return nil, errors.New("rules is nil")
@@ -66,7 +66,7 @@ func NewMappingRules(rules map[string][]Rule) (*MappingRules, error) {
 	return mr, nil
 }
 
-// Validate the given rule information
+// validate validates the given rule information.
 func (mr *MappingRules) validate() error {
 	for domain, rules := range mr.Rules {
 		if domain == "" {
@@ -130,7 +130,7 @@ func (mr *MappingRules) validate() error {
 	return nil
 }
 
-// Translate the information given to the argument to action and resource
+// Translate the information given to the argument to action and resource.~
 func (mr *MappingRules) Translate(domain, method, path, query string) (string, string, error) {
 	if mr.Rules == nil {
 		return method, path, nil

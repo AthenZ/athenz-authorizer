@@ -23,7 +23,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Assertion represents the refined assertion data use in policy checking
+// Assertion represents the refined assertion data use in policy checking.
 type Assertion struct {
 	ResourceDomain string         `json:"resource_domain"`
 	ActionRegexp   *regexp.Regexp `json:"-"`
@@ -36,7 +36,7 @@ type Assertion struct {
 	ResourceRegexpString string `json:"resource_regexp_string"`
 }
 
-// NewAssertion returns the Assertion object or error
+// NewAssertion returns the Assertion object or error.
 func NewAssertion(action, resource, effect string) (*Assertion, error) {
 	domres := strings.SplitN(resource, ":", 2)
 	if len(domres) < 2 {

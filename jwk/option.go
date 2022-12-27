@@ -34,10 +34,10 @@ var (
 	}
 )
 
-// Option represents a functional option
+// Option represents a functional option.
 type Option func(*jwkd) error
 
-// WithAthenzJwksURL returns an Athenz JWK URL path functional option
+// WithAthenzJwksURL returns an Athenz JWK URL path functional option.
 func WithAthenzJwksURL(url string) Option {
 	return func(j *jwkd) error {
 		if url == "" {
@@ -52,7 +52,7 @@ func WithAthenzJwksURL(url string) Option {
 	}
 }
 
-// WithRefreshPeriod returns a RefreshPeriod functional option
+// WithRefreshPeriod returns a RefreshPeriod functional option.
 func WithRefreshPeriod(t string) Option {
 	return func(j *jwkd) error {
 		if t == "" {
@@ -67,7 +67,7 @@ func WithRefreshPeriod(t string) Option {
 	}
 }
 
-// WithRetryDelay returns an RetryDelay functional option
+// WithRetryDelay returns an RetryDelay functional option.
 func WithRetryDelay(i string) Option {
 	return func(j *jwkd) error {
 		if i == "" {
@@ -82,7 +82,7 @@ func WithRetryDelay(i string) Option {
 	}
 }
 
-// WithURLs returns an JwkUrls functional option
+// WithURLs returns an JwkUrls functional option.
 func WithURLs(urls []string) Option {
 	return func(j *jwkd) error {
 		for _, targetURL := range urls {
@@ -99,7 +99,7 @@ func WithURLs(urls []string) Option {
 	}
 }
 
-// WithHTTPClient returns a HTTPClient functional option
+// WithHTTPClient returns a HTTPClient functional option.
 func WithHTTPClient(cl *http.Client) Option {
 	return func(j *jwkd) error {
 		j.client = cl

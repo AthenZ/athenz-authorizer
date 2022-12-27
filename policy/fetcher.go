@@ -34,7 +34,7 @@ import (
 // SignedPolicyVerifier type defines the function signature to verify a signed policy.
 type SignedPolicyVerifier func(*SignedPolicy) error
 
-// Fetcher represents fetcher object for fetching signed policy
+// Fetcher represents fetcher object for fetching signed policy.
 type Fetcher interface {
 	Domain() string
 	Fetch(context.Context) (*SignedPolicy, error)
@@ -66,7 +66,7 @@ type taggedPolicy struct {
 	ctime      time.Time
 }
 
-// Domain returns the fetcher domain
+// Domain returns the fetcher domain.
 func (f *fetcher) Domain() string {
 	return f.domain
 }

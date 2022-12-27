@@ -35,10 +35,10 @@ var (
 	}
 )
 
-// Option represents a functional option
+// Option represents a functional option.
 type Option func(*pubkeyd) error
 
-// WithAthenzURL returns an AthenzURL functional option
+// WithAthenzURL returns an AthenzURL functional option.
 func WithAthenzURL(url string) Option {
 	return func(p *pubkeyd) error {
 		u := urlutil.TrimHTTPScheme(url)
@@ -50,7 +50,7 @@ func WithAthenzURL(url string) Option {
 	}
 }
 
-// WithSysAuthDomain returns a SysAuthDomain functional option
+// WithSysAuthDomain returns a SysAuthDomain functional option.
 func WithSysAuthDomain(d string) Option {
 	return func(p *pubkeyd) error {
 		if d == "" {
@@ -61,7 +61,7 @@ func WithSysAuthDomain(d string) Option {
 	}
 }
 
-// WithRefreshPeriod returns a RefreshPeriod functional option
+// WithRefreshPeriod returns a RefreshPeriod functional option.
 func WithRefreshPeriod(t string) Option {
 	return func(p *pubkeyd) error {
 		if t == "" {
@@ -77,7 +77,7 @@ func WithRefreshPeriod(t string) Option {
 	}
 }
 
-// WithRetryDelay returns an RetryDelay functional option
+// WithRetryDelay returns an RetryDelay functional option.
 func WithRetryDelay(i string) Option {
 	return func(p *pubkeyd) error {
 		if i == "" {
@@ -93,7 +93,7 @@ func WithRetryDelay(i string) Option {
 	}
 }
 
-// WithETagExpiry returns an ETagExpiry functional option
+// WithETagExpiry returns an ETagExpiry functional option.
 func WithETagExpiry(d string) Option {
 	return func(p *pubkeyd) error {
 		if d == "" {
@@ -109,7 +109,7 @@ func WithETagExpiry(d string) Option {
 	}
 }
 
-// WithETagPurgePeriod returns an ETagPurgePeriod functional option
+// WithETagPurgePeriod returns an ETagPurgePeriod functional option.
 func WithETagPurgePeriod(d string) Option {
 	return func(p *pubkeyd) error {
 		if d == "" {
@@ -125,7 +125,7 @@ func WithETagPurgePeriod(d string) Option {
 	}
 }
 
-// WithHTTPClient returns a HTTPClient functional option
+// WithHTTPClient returns a HTTPClient functional option.
 func WithHTTPClient(cl *http.Client) Option {
 	return func(p *pubkeyd) error {
 		if p != nil {

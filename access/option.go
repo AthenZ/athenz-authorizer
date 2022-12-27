@@ -27,10 +27,10 @@ var (
 	defaultOptions = []Option{}
 )
 
-// Option represents a functional options pattern interface
+// Option represents a functional options pattern interface.
 type Option func(*atp) error
 
-// WithJWKProvider represents set pubkey provider functional option
+// WithJWKProvider represents set pubkey provider functional option.
 func WithJWKProvider(jwkp jwk.Provider) Option {
 	return func(r *atp) error {
 		r.jwkp = jwkp
@@ -38,7 +38,7 @@ func WithJWKProvider(jwkp jwk.Provider) Option {
 	}
 }
 
-// WithEnableMTLSCertificateBoundAccessToken represents set enableMTLSCertificateBoundAccessToken functional option
+// WithEnableMTLSCertificateBoundAccessToken represents set enableMTLSCertificateBoundAccessToken functional option.
 func WithEnableMTLSCertificateBoundAccessToken(b bool) Option {
 	return func(r *atp) error {
 		r.enableMTLSCertificateBoundAccessToken = b
@@ -46,7 +46,7 @@ func WithEnableMTLSCertificateBoundAccessToken(b bool) Option {
 	}
 }
 
-// WithEnableVerifyClientID represents set enableVerifyClientID functional option
+// WithEnableVerifyClientID represents set enableVerifyClientID functional option.
 func WithEnableVerifyClientID(b bool) Option {
 	return func(r *atp) error {
 		r.enableVerifyClientID = b
@@ -54,7 +54,7 @@ func WithEnableVerifyClientID(b bool) Option {
 	}
 }
 
-// WithAuthorizedClientIDs represents set authorizedClientIDs functional option
+// WithAuthorizedClientIDs represents set authorizedClientIDs functional option.
 func WithAuthorizedClientIDs(m map[string][]string) Option {
 	return func(r *atp) error {
 		r.authorizedClientIDs = m
@@ -62,7 +62,7 @@ func WithAuthorizedClientIDs(m map[string][]string) Option {
 	}
 }
 
-// WithClientCertificateGoBackSeconds represents set clientCertificateGoBackSeconds functional option
+// WithClientCertificateGoBackSeconds represents set clientCertificateGoBackSeconds functional option.
 func WithClientCertificateGoBackSeconds(t string) Option {
 	return func(r *atp) error {
 		if t == "" {
@@ -77,7 +77,7 @@ func WithClientCertificateGoBackSeconds(t string) Option {
 	}
 }
 
-// WithClientCertificateOffsetSeconds represents set clientCertificateOffsetSeconds functional option
+// WithClientCertificateOffsetSeconds represents set clientCertificateOffsetSeconds functional option.
 func WithClientCertificateOffsetSeconds(t string) Option {
 	return func(r *atp) error {
 		if t == "" {

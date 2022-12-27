@@ -36,10 +36,10 @@ var (
 	}
 )
 
-// Option represents a functional option
+// Option represents a functional option.
 type Option func(*policyd) error
 
-// WithPubKeyProvider returns a PubKeyProvider functional option
+// WithPubKeyProvider returns a PubKeyProvider functional option.
 func WithPubKeyProvider(pkp pubkey.Provider) Option {
 	return func(pol *policyd) error {
 		if pkp != nil {
@@ -49,7 +49,7 @@ func WithPubKeyProvider(pkp pubkey.Provider) Option {
 	}
 }
 
-// WithAthenzURL returns an AthenzURL functional option
+// WithAthenzURL returns an AthenzURL functional option.
 func WithAthenzURL(url string) Option {
 	return func(pol *policyd) error {
 		u := urlutil.TrimHTTPScheme(url)
@@ -61,7 +61,7 @@ func WithAthenzURL(url string) Option {
 	}
 }
 
-// WithAthenzDomains represents an AthenzDomain functional option
+// WithAthenzDomains represents an AthenzDomain functional option.
 func WithAthenzDomains(doms ...string) Option {
 	return func(pol *policyd) error {
 		if doms == nil {
@@ -72,7 +72,7 @@ func WithAthenzDomains(doms ...string) Option {
 	}
 }
 
-// WithExpiryMargin returns an ExpiryMargin functional option
+// WithExpiryMargin returns an ExpiryMargin functional option.
 func WithExpiryMargin(d string) Option {
 	return func(pol *policyd) error {
 		if d == "" {
@@ -87,7 +87,7 @@ func WithExpiryMargin(d string) Option {
 	}
 }
 
-// WithRefreshPeriod returns a RefreshPeriod functional option
+// WithRefreshPeriod returns a RefreshPeriod functional option.
 func WithRefreshPeriod(d string) Option {
 	return func(pol *policyd) error {
 		if d == "" {
@@ -102,7 +102,7 @@ func WithRefreshPeriod(d string) Option {
 	}
 }
 
-// WithPurgePeriod returns a PurgePeriod functional option
+// WithPurgePeriod returns a PurgePeriod functional option.
 func WithPurgePeriod(d string) Option {
 	return func(pol *policyd) error {
 		if d == "" {
@@ -117,7 +117,7 @@ func WithPurgePeriod(d string) Option {
 	}
 }
 
-// WithRetryDelay returns an RetryDelay functional option
+// WithRetryDelay returns an RetryDelay functional option.
 func WithRetryDelay(d string) Option {
 	return func(pol *policyd) error {
 		if d == "" {
@@ -132,7 +132,7 @@ func WithRetryDelay(d string) Option {
 	}
 }
 
-// WithRetryAttempts returns an RetryAttempts functional option
+// WithRetryAttempts returns an RetryAttempts functional option.
 func WithRetryAttempts(c int) Option {
 	return func(pol *policyd) error {
 		if c == 0 {
@@ -143,7 +143,7 @@ func WithRetryAttempts(c int) Option {
 	}
 }
 
-// WithHTTPClient returns a HttpClient functional option
+// WithHTTPClient returns a HttpClient functional option.
 func WithHTTPClient(c *http.Client) Option {
 	return func(pol *policyd) error {
 		if c != nil {
