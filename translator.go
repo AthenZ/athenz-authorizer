@@ -130,7 +130,7 @@ func (mr *MappingRules) validate() error {
 	return nil
 }
 
-// Translate the information given to the argument to action and resource.~
+// Translate the information given to the argument to action and resource.
 func (mr *MappingRules) Translate(domain, method, path, query string) (string, string, error) {
 	if mr.Rules == nil {
 		return method, path, nil
