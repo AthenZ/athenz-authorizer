@@ -19,6 +19,6 @@ package jwk
 import "github.com/pkg/errors"
 
 var (
-	// ErrFetchAthenzJWK "Fetch athenz json web key error"
+	// ErrFetchAthenzJWK "Fetch athenz json web key error".
 	ErrFetchAthenzJWK = errors.New("Fetch athenz json web key error")
 )

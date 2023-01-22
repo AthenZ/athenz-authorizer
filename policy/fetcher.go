@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"sync/atomic"
 	"time"
@@ -35,7 +34,7 @@ import (
 // SignedPolicyVerifier type defines the function signature to verify a signed policy.
 type SignedPolicyVerifier func(*SignedPolicy) error
 
-// Fetcher represents fetcher object for fetching signed policy
+// Fetcher represents fetcher object for fetching signed policy.
 type Fetcher interface {
 	Domain() string
 	Fetch(context.Context) (*SignedPolicy, error)
@@ -67,7 +66,7 @@ type taggedPolicy struct {
 	ctime      time.Time
 }
 
-// Domain returns the fetcher domain
+// Domain returns the fetcher domain.
 func (f *fetcher) Domain() string {
 	return f.domain
 }
@@ -187,7 +186,7 @@ func (t *taggedPolicy) String() string {
 func flushAndClose(rc io.ReadCloser) error {
 	if rc != nil {
 		// flush
-		_, err := io.Copy(ioutil.Discard, rc)
+		_, err := io.Copy(io.Discard, rc)
 		if err != nil {
 			return err
 		}

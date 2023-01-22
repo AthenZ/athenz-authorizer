@@ -52,10 +52,10 @@ type AccessTokenParam struct {
 	authorizedClientIDs  map[string][]string
 }
 
-// Option represents a functional option
+// Option represents a functional option.
 type Option func(*authority) error
 
-// WithAthenzURL returns an AthenzURL functional option
+// WithAthenzURL returns an AthenzURL functional option.
 func WithAthenzURL(url string) Option {
 	return func(authz *authority) error {
 		u := urlutil.TrimHTTPScheme(url)
@@ -67,7 +67,7 @@ func WithAthenzURL(url string) Option {
 	}
 }
 
-// WithAthenzDomains returns an AthenzDomains functional option
+// WithAthenzDomains returns an AthenzDomains functional option.
 func WithAthenzDomains(domains ...string) Option {
 	return func(authz *authority) error {
 		authz.athenzDomains = domains
@@ -75,7 +75,7 @@ func WithAthenzDomains(domains ...string) Option {
 	}
 }
 
-// WithHTTPClient returns a HTTPClient functional option
+// WithHTTPClient returns a HTTPClient functional option.
 func WithHTTPClient(c *http.Client) Option {
 	return func(authz *authority) error {
 		if c == nil {
@@ -89,7 +89,7 @@ func WithHTTPClient(c *http.Client) Option {
 	}
 }
 
-// WithCacheExp returns a CacheExp functional option
+// WithCacheExp returns a CacheExp functional option.
 func WithCacheExp(exp time.Duration) Option {
 	return func(authz *authority) error {
 		authz.cache.SetDefaultExpire(exp)
@@ -102,7 +102,7 @@ func WithCacheExp(exp time.Duration) Option {
 	pubkeyd parameters
 */
 
-// WithEnablePubkeyd returns an EnablePubkeyd functional option
+// WithEnablePubkeyd returns an EnablePubkeyd functional option.
 func WithEnablePubkeyd() Option {
 	return func(authz *authority) error {
 		authz.disablePubkeyd = false
@@ -110,7 +110,7 @@ func WithEnablePubkeyd() Option {
 	}
 }
 
-// WithDisablePubkeyd returns a DisablePubkeyd functional option
+// WithDisablePubkeyd returns a DisablePubkeyd functional option.
 func WithDisablePubkeyd() Option {
 	return func(authz *authority) error {
 		authz.disablePubkeyd = true
@@ -118,7 +118,7 @@ func WithDisablePubkeyd() Option {
 	}
 }
 
-// WithPubkeyRefreshPeriod returns a PubkeyRefreshPeriod functional option
+// WithPubkeyRefreshPeriod returns a PubkeyRefreshPeriod functional option.
 func WithPubkeyRefreshPeriod(t string) Option {
 	return func(authz *authority) error {
 		authz.pubkeyRefreshPeriod = t
@@ -126,7 +126,7 @@ func WithPubkeyRefreshPeriod(t string) Option {
 	}
 }
 
-// WithPubkeyRetryDelay returns a PubkeyRetryDelay functional option
+// WithPubkeyRetryDelay returns a PubkeyRetryDelay functional option.
 func WithPubkeyRetryDelay(i string) Option {
 	return func(authz *authority) error {
 		authz.pubkeyRetryDelay = i
@@ -134,7 +134,7 @@ func WithPubkeyRetryDelay(i string) Option {
 	}
 }
 
-// WithPubkeySysAuthDomain returns a PubkeySysAuthDomain functional option
+// WithPubkeySysAuthDomain returns a PubkeySysAuthDomain functional option.
 func WithPubkeySysAuthDomain(domain string) Option {
 	return func(authz *authority) error {
 		authz.pubkeySysAuthDomain = domain
@@ -142,7 +142,7 @@ func WithPubkeySysAuthDomain(domain string) Option {
 	}
 }
 
-// WithPubkeyETagExpiry returns a PubkeyETagExpiry functional option
+// WithPubkeyETagExpiry returns a PubkeyETagExpiry functional option.
 func WithPubkeyETagExpiry(t string) Option {
 	return func(authz *authority) error {
 		authz.pubkeyETagExpiry = t
@@ -150,7 +150,7 @@ func WithPubkeyETagExpiry(t string) Option {
 	}
 }
 
-// WithPubkeyETagPurgePeriod returns a PubkeyETagPurgePeriod functional option
+// WithPubkeyETagPurgePeriod returns a PubkeyETagPurgePeriod functional option.
 func WithPubkeyETagPurgePeriod(t string) Option {
 	return func(authz *authority) error {
 		authz.pubkeyETagPurgePeriod = t
@@ -162,7 +162,7 @@ func WithPubkeyETagPurgePeriod(t string) Option {
 	policyd parameters
 */
 
-// WithEnablePolicyd returns an EnablePolicyd functional option
+// WithEnablePolicyd returns an EnablePolicyd functional option.
 func WithEnablePolicyd() Option {
 	return func(authz *authority) error {
 		authz.disablePolicyd = false
@@ -170,7 +170,7 @@ func WithEnablePolicyd() Option {
 	}
 }
 
-// WithDisablePolicyd returns a DisablePolicyd functional option
+// WithDisablePolicyd returns a DisablePolicyd functional option.
 func WithDisablePolicyd() Option {
 	return func(authz *authority) error {
 		authz.disablePolicyd = true
@@ -178,7 +178,7 @@ func WithDisablePolicyd() Option {
 	}
 }
 
-// WithPolicyRefreshPeriod returns a PolicyRefreshPeriod functional option
+// WithPolicyRefreshPeriod returns a PolicyRefreshPeriod functional option.
 func WithPolicyRefreshPeriod(t string) Option {
 	return func(authz *authority) error {
 		authz.policyRefreshPeriod = t
@@ -186,7 +186,7 @@ func WithPolicyRefreshPeriod(t string) Option {
 	}
 }
 
-// WithPolicyExpiryMargin returns a PolicyExpiryMargin functional option
+// WithPolicyExpiryMargin returns a PolicyExpiryMargin functional option.
 func WithPolicyExpiryMargin(t string) Option {
 	return func(authz *authority) error {
 		authz.policyExpiryMargin = t
@@ -194,7 +194,7 @@ func WithPolicyExpiryMargin(t string) Option {
 	}
 }
 
-// WithPolicyPurgePeriod returns a PolicyPurgePeriod functional option
+// WithPolicyPurgePeriod returns a PolicyPurgePeriod functional option.
 func WithPolicyPurgePeriod(t string) Option {
 	return func(authz *authority) error {
 		authz.policyPurgePeriod = t
@@ -202,7 +202,7 @@ func WithPolicyPurgePeriod(t string) Option {
 	}
 }
 
-// WithPolicyRetryDelay returns a PolicyRetryDelay functional option
+// WithPolicyRetryDelay returns a PolicyRetryDelay functional option.
 func WithPolicyRetryDelay(i string) Option {
 	return func(authz *authority) error {
 		authz.policyRetryDelay = i
@@ -210,7 +210,7 @@ func WithPolicyRetryDelay(i string) Option {
 	}
 }
 
-// WithPolicyRetryAttempts returns a PolicyRetryAttempts functional option
+// WithPolicyRetryAttempts returns a PolicyRetryAttempts functional option.
 func WithPolicyRetryAttempts(c int) Option {
 	return func(authz *authority) error {
 		authz.policyRetryAttempts = c
@@ -222,7 +222,7 @@ func WithPolicyRetryAttempts(c int) Option {
 	jwkd parameters
 */
 
-// WithEnableJwkd returns an EnableJwkd functional option
+// WithEnableJwkd returns an EnableJwkd functional option.
 func WithEnableJwkd() Option {
 	return func(authz *authority) error {
 		authz.disableJwkd = false
@@ -230,7 +230,7 @@ func WithEnableJwkd() Option {
 	}
 }
 
-// WithDisableJwkd returns a DisableJwkd functional option
+// WithDisableJwkd returns a DisableJwkd functional option.
 func WithDisableJwkd() Option {
 	return func(authz *authority) error {
 		authz.disableJwkd = true
@@ -238,7 +238,7 @@ func WithDisableJwkd() Option {
 	}
 }
 
-// WithJwkRefreshPeriod returns a JwkRefreshPeriod functional option
+// WithJwkRefreshPeriod returns a JwkRefreshPeriod functional option.
 func WithJwkRefreshPeriod(t string) Option {
 	return func(authz *authority) error {
 		authz.jwkRefreshPeriod = t
@@ -246,7 +246,7 @@ func WithJwkRefreshPeriod(t string) Option {
 	}
 }
 
-// WithJwkRetryDelay returns a JwkRetryDelay functional option
+// WithJwkRetryDelay returns a JwkRetryDelay functional option.
 func WithJwkRetryDelay(i string) Option {
 	return func(authz *authority) error {
 		authz.jwkRetryDelay = i
@@ -254,7 +254,7 @@ func WithJwkRetryDelay(i string) Option {
 	}
 }
 
-// WithJwkURLs returns a JwkURLs functional option
+// WithJwkURLs returns a JwkURLs functional option.
 func WithJwkURLs(urls []string) Option {
 	return func(authz *authority) error {
 		authz.jwkURLs = urls
@@ -266,7 +266,7 @@ func WithJwkURLs(urls []string) Option {
 	access token parameters
 */
 
-// NewAccessTokenParam returns a new access token parameter
+// NewAccessTokenParam returns a new access token parameter.
 func NewAccessTokenParam(enable bool, verifyCertThumbprint bool, certBackdateDur, certOffsetDur string, verifyClientID bool, authorizedClientIDs map[string][]string) AccessTokenParam {
 	return AccessTokenParam{
 		// Flag to enable verify of access token
@@ -284,7 +284,7 @@ func NewAccessTokenParam(enable bool, verifyCertThumbprint bool, certBackdateDur
 	}
 }
 
-// WithAccessTokenParam returns a functional option that new access token parameter
+// WithAccessTokenParam returns a functional option. that new access token parameter.
 func WithAccessTokenParam(accessTokenParam AccessTokenParam) Option {
 	return func(authz *authority) error {
 		authz.accessTokenParam = accessTokenParam
@@ -296,7 +296,7 @@ func WithAccessTokenParam(accessTokenParam AccessTokenParam) Option {
 	role token parameters
 */
 
-// WithEnableRoleToken returns a enable roletoken functional option
+// WithEnableRoleToken returns a enable roletoken functional option.
 func WithEnableRoleToken() Option {
 	return func(authz *authority) error {
 		authz.enableRoleToken = true
@@ -304,7 +304,7 @@ func WithEnableRoleToken() Option {
 	}
 }
 
-// WithDisableRoleToken returns a disable roletoken functional option
+// WithDisableRoleToken returns a disable roletoken functional option.
 func WithDisableRoleToken() Option {
 	return func(authz *authority) error {
 		authz.enableRoleToken = false
@@ -312,7 +312,7 @@ func WithDisableRoleToken() Option {
 	}
 }
 
-// WithRoleAuthHeader returns a RoleAuthHeader functional option
+// WithRoleAuthHeader returns a RoleAuthHeader functional option.
 func WithRoleAuthHeader(h string) Option {
 	return func(authz *authority) error {
 		authz.roleAuthHeader = h
@@ -324,7 +324,7 @@ func WithRoleAuthHeader(h string) Option {
 	role certificate parameters
 */
 
-// WithEnableRoleCert returns a enable rolecert functional option
+// WithEnableRoleCert returns a enable rolecert functional option.
 func WithEnableRoleCert() Option {
 	return func(authz *authority) error {
 		authz.enableRoleCert = true
@@ -332,7 +332,7 @@ func WithEnableRoleCert() Option {
 	}
 }
 
-// WithDisableRoleCert returns a disable rolecert functional option
+// WithDisableRoleCert returns a disable rolecert functional option.
 func WithDisableRoleCert() Option {
 	return func(authz *authority) error {
 		authz.enableRoleCert = false
@@ -340,7 +340,7 @@ func WithDisableRoleCert() Option {
 	}
 }
 
-// WithRoleCertURIPrefix returns a RoleCertURIPrefix functional option
+// WithRoleCertURIPrefix returns a RoleCertURIPrefix functional option.
 func WithRoleCertURIPrefix(t string) Option {
 	return func(authz *authority) error {
 		authz.roleCertURIPrefix = t
@@ -348,7 +348,7 @@ func WithRoleCertURIPrefix(t string) Option {
 	}
 }
 
-// WithTranslator returns a Translator functional option
+// WithTranslator returns a Translator functional option.
 func WithTranslator(t Translator) Option {
 	return func(authz *authority) error {
 		authz.translator = t
@@ -356,7 +356,7 @@ func WithTranslator(t Translator) Option {
 	}
 }
 
-// WithResourcePrefix returns a ResourcePrefix functional option
+// WithResourcePrefix returns a ResourcePrefix functional option.
 func WithResourcePrefix(p string) Option {
 	return func(authz *authority) error {
 		authz.resourcePrefix = p

@@ -1,0 +1,85 @@
+name: lint
+
+on:
+  # If any commit message in your push or the HEAD commit of your PR contains the strings
+  # [skip ci], [ci skip], [no ci], [skip actions], or [actions skip]
+  # workflows triggered on the push or pull_request events will be skipped.
+  # https://github.blog/changelog/2021-02-08-github-actions-skip-pull-request-and-push-workflows-with-skip-ci/
+  push:
+    branches: [ master ]
+    # Publish semver tags as releases.
+    tags: [ 'v[0-9]+.[0-9]+.[0-9]+' ]
+  # If any commit message in your push or the HEAD commit of your PR contains the strings
+  # [skip ci], [ci skip], [no ci], [skip actions], or [actions skip]
+  # workflows triggered on the push or pull_request events will be skipped.
+  # https://github.blog/changelog/2021-02-08-github-actions-skip-pull-request-and-push-workflows-with-skip-ci/
+  pull_request:
+    branches: [ master ]
+
+env:
+  GOLANG_VERSION: ^1.19
+
+jobs:
+  # This job runs golangci-lint and reports issues from linters.
+  # https://github.com/golangci/golangci-lint-action
+  golangci-lint:
+    name: golangci-lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Setup Golang
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GOLANG_VERSION }}
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        # continue-on-error: true
+        with:
+          # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
+          version: "latest"
+          # Optional: golangci-lint command line arguments.
+          args: --issues-exit-code=0 -c ./.golangci.yml
+
+  # This job runs markdownlint and reports issues from linters.
+  # https://github.com/DavidAnson/markdownlint-cli2-action
+  markdownlint:
+    name: markdownlint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: markdownlint
+        uses: DavidAnson/markdownlint-cli2-action@v7
+        continue-on-error: true
+        with:
+          globs: |
+            README.md
+            CHANGELOG.md
+            docs/*.md
+
+  CodeQL:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['go']
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2

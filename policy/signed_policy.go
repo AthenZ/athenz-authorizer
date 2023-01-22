@@ -27,12 +27,12 @@ import (
 	"github.com/AthenZ/athenz/utils/zpe-updater/util"
 )
 
-// SignedPolicy represents the signed policy data
+// SignedPolicy represents the signed policy data.
 type SignedPolicy struct {
 	util.DomainSignedPolicyData
 }
 
-// Verify verifies the signed policy and return any errors
+// Verify verifies the signed policy and return any errors.
 func (s *SignedPolicy) Verify(pkp pubkey.Provider) error {
 
 	if s.SignedPolicyData == nil {

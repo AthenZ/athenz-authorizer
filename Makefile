@@ -2,7 +2,10 @@ GO_VERSION:=$(shell go version)
 
 .PHONY: all clean bench bench-all profile lint test contributors update install
 
-all: clean install lint test bench
+all: build
+
+build:
+	go build
 
 clean:
 	go clean ./...
@@ -29,7 +32,7 @@ deps: clean
 	rm -rf vendor
 
 lint:
-	gometalinter --enable-all . | rg -v comment
+	golangci-lint run -c ./.golangci.yml
 
 test: clean init
 	GO111MODULE=on go test --race -v ./...

@@ -24,10 +24,10 @@ var (
 	defaultOptions = []Option{}
 )
 
-// Option represents a functional options pattern interface
+// Option represents a functional options pattern interface.
 type Option func(*rtp) error
 
-// WithPubkeyProvider represents set pubkey provider functional option
+// WithPubkeyProvider represents set pubkey provider functional option.
 func WithPubkeyProvider(pkp pubkey.Provider) Option {
 	return func(r *rtp) error {
 		r.pkp = pkp

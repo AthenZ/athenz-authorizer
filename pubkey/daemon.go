@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"sync"
 	"time"
@@ -33,7 +32,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// Daemon represent the daemon to retrieve public key data.
+// Daemon represents the daemon to retrieve public key data.
 type Daemon interface {
 	Start(ctx context.Context) <-chan error
 	Update(context.Context) error
@@ -56,7 +55,7 @@ type pubkeyd struct {
 	confCache *AthenzConfig
 }
 
-// AthenzConfig represent the cache of Athenz config.
+// AthenzConfig represents the cache of Athenz config.
 type AthenzConfig struct {
 	ZMSPubKeys *sync.Map //map[string]authcore.Verifier
 	ZTSPubKeys *sync.Map //map[string]authcore.Verifier
@@ -67,21 +66,21 @@ type confCache struct {
 	sac  *SysAuthConfig
 }
 
-// Provider represent the public key provider to retrive the public key.
+// Provider represents the public key provider to retrieve the public key.
 type Provider func(AthenzEnv, string) authcore.Verifier
 
-// AthenzEnv represent the athenz environment name.
+// AthenzEnv represents the athenz environment name.
 type AthenzEnv string
 
 const (
-	// EnvZMS represent the ZMS environment name.
+	// EnvZMS represents the ZMS environment name.
 	EnvZMS AthenzEnv = "zms"
 
-	// EnvZTS represent the ZTS environment name.
+	// EnvZTS represents the ZTS environment name.
 	EnvZTS AthenzEnv = "zts"
 )
 
-// New represent the constructor of Pubkeyd
+// New represents the constructor of Pubkeyd.
 func New(opts ...Option) (Daemon, error) {
 	c := &pubkeyd{
 		confCache: &AthenzConfig{
@@ -100,7 +99,7 @@ func New(opts ...Option) (Daemon, error) {
 	return c, nil
 }
 
-// Start starts the pubkey daemon to retrive the public key periodically
+// Start starts the pubkey daemon to retrieve the public key periodically.
 func (p *pubkeyd) Start(ctx context.Context) <-chan error {
 	glg.Info("Starting pubkey updater")
 
@@ -149,7 +148,7 @@ func (p *pubkeyd) Start(ctx context.Context) <-chan error {
 	return ech
 }
 
-// Update updates and cache athenz public key data
+// Update updates and cache athenz public key data.
 func (p *pubkeyd) Update(ctx context.Context) error {
 	glg.Info("Updating athenz pubkey")
 	eg := errgroup.Group{}
@@ -223,7 +222,7 @@ func (p *pubkeyd) Update(ctx context.Context) error {
 	return nil
 }
 
-// GetProvider returns the public key provider for user to get the public key
+// GetProvider returns the public key provider for user to get the public key.
 func (p *pubkeyd) GetProvider() Provider {
 	return p.getPubKey
 }
@@ -273,7 +272,7 @@ func (p *pubkeyd) fetchPubKeyEntries(ctx context.Context, env AthenzEnv) (*SysAu
 		return nil, false, errors.Wrap(err, "json format not correct")
 	}
 
-	if _, err = io.Copy(ioutil.Discard, r.Body); err != nil {
+	if _, err = io.Copy(io.Discard, r.Body); err != nil {
 		glg.Warn(errors.Wrap(err, "error io.copy"))
 	}
 	if err = r.Body.Close(); err != nil {

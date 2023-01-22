@@ -16,7 +16,7 @@ limitations under the License.
 
 package authorizerd
 
-// Principal is an authenticated entity
+// Principal is an authenticated entity.
 type Principal interface {
 	Name() string
 	Roles() []string
@@ -26,7 +26,7 @@ type Principal interface {
 	AuthorizedRoles() []string
 }
 
-// OAuthAccessToken is an interface for a principal that has a OAuthAccessToken
+// OAuthAccessToken is an interface for a principal that has a OAuthAccessToken.
 type OAuthAccessToken interface {
 	ClientID() string
 }
@@ -45,37 +45,37 @@ type oAuthAccessToken struct {
 	clientID string
 }
 
-// Name returns the principal's name
+// Name returns the principal's name.
 func (p *principal) Name() string {
 	return p.name
 }
 
-// Roles return the principal's roles
+// Roles return the principal's roles.
 func (p *principal) Roles() []string {
 	return p.roles
 }
 
-// Domain return the principal's domain
+// Domain return the principal's domain.
 func (p *principal) Domain() string {
 	return p.domain
 }
 
-// IssueTime return the principal's issuetime
+// IssueTime return the principal's issuetime.
 func (p *principal) IssueTime() int64 {
 	return p.issueTime
 }
 
-// ExpiryTime return the principal's expiryTime
+// ExpiryTime return the principal's expiryTime.
 func (p *principal) ExpiryTime() int64 {
 	return p.expiryTime
 }
 
-// AuthorizedRoles returns the access token's authorized role
+// AuthorizedRoles returns the access token's authorized role.
 func (p *principal) AuthorizedRoles() []string {
 	return p.authorizedRoles
 }
 
-// ClientID returns the access token's client ID
+// ClientID returns the access token's client ID.
 func (c *oAuthAccessToken) ClientID() string {
 	return c.clientID
 }

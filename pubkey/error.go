@@ -19,9 +19,9 @@ package pubkey
 import "github.com/pkg/errors"
 
 var (
-	// ErrFetchAthenzPubkey "Fetch athenz pubkey error"
+	// ErrFetchAthenzPubkey is "Fetch athenz pubkey error".
 	ErrFetchAthenzPubkey = errors.New("Fetch athenz pubkey error")
 
-	// ErrEmptyAthenzPubkey "Athenz pubkey not initialized"
+	// ErrEmptyAthenzPubkey is "Athenz pubkey not initialized".
 	ErrEmptyAthenzPubkey = errors.New("Athenz pubkey not initialized")
 )

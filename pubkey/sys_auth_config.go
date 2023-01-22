@@ -16,14 +16,14 @@ limitations under the License.
 
 package pubkey
 
-// SysAuthConfig represent the system authority config data structure
+// SysAuthConfig represent the system authority config data structure.
 type SysAuthConfig struct {
 	Modified   string       `json:"modified"`
 	Name       string       `json:"name"`
 	PublicKeys []*PublicKey `json:"publicKeys"`
 }
 
-// PublicKey represent the public key ID and the key from Athenz
+// PublicKey represent the public key ID and the key from Athenz.
 type PublicKey struct {
 	ID  string `json:"id"`
 	Key string `json:"key"`

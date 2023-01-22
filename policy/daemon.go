@@ -72,7 +72,7 @@ type policyd struct {
 	fetchers map[string]Fetcher // used for concurrent read, should never be updated
 }
 
-// New represent the constructor of Policyd
+// New represents the constructor of Policyd.
 func New(opts ...Option) (Daemon, error) {
 	g := gache.New()
 	p := &policyd{
@@ -105,7 +105,7 @@ func New(opts ...Option) (Daemon, error) {
 	return p, nil
 }
 
-// Start starts the Policy daemon to retrive the policy data periodically
+// Start starts the Policy daemon to retrieve the policy data periodically.
 func (p *policyd) Start(ctx context.Context) <-chan error {
 	glg.Info("Starting policyd updater")
 	ech := make(chan error, 100)
@@ -152,7 +152,7 @@ func (p *policyd) Start(ctx context.Context) <-chan error {
 	return ech
 }
 
-// Update updates and cache policy data
+// Update updates and cache policy data.
 func (p *policyd) Update(ctx context.Context) error {
 	glg.Get().DisableColor()
 	jobID := fastime.Now().Unix()
@@ -289,7 +289,7 @@ func (p *policyd) CheckPolicyRoles(ctx context.Context, domain string, roles []s
 	return nil, err
 }
 
-// GetPolicyCache returns the cached role policy data
+// GetPolicyCache returns the cached role policy data.
 func (p *policyd) GetPolicyCache(ctx context.Context) map[string]interface{} {
 	curRpPtrPtr := (*unsafe.Pointer)(unsafe.Pointer(&p.rolePolicies))
 	rp := *(*gache.Gache)(atomic.LoadPointer(curRpPtrPtr))

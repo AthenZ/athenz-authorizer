@@ -1,6 +1,29 @@
 linters-settings:
   errcheck:
-    ignore: fmt:.*,glg:.*
+    ignore: "fmt:.*,github.com/kpango/glg:.*"
 issues:
-  exclude:
-    - Error return value of .(glg.(Info|Log|Debug|Warn|Error|Success|Fail|Print|Println|CustomLog)f?). is not checked
+  max-same-issues: 0
+  # exclude:
+  #   - Error return value of .(glg.(Info|Log|Debug|Warn|Error|Success|Fail|Print|Println|CustomLog)f?). is not checked
+linters:
+  presets:
+    # - bugs
+    - comment
+    # - complexity
+    # - error
+    # - format
+    # - import
+    # - metalinter
+    - module
+    - performance
+    # - sql
+    # - style
+    # - test
+    - unused
+  disable:
+    - varcheck
+    - deadcode
+    - structcheck
+    - maligned
+    - dupword
+    - godox

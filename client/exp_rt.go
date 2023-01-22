@@ -18,7 +18,6 @@ package client
 
 import (
 	"io"
-	"io/ioutil"
 	"math"
 	"net/http"
 	"time"
@@ -82,7 +81,10 @@ func (p *ExponentialRoundTripper) RoundTrip(req *http.Request) (*http.Response, 
 		}
 
 		// response success
-		io.Copy(ioutil.Discard, resp.Body)
+		_, err := io.Copy(io.Discard, resp.Body)
+		if err != nil {
+			return nil, err
+		}
 		resp.Body.Close()
 		return resp, nil
 	}
@@ -96,7 +98,7 @@ func (p *ExponentialRoundTripper) calNextWaitDur(count int) time.Duration {
 }
 
 // sleep return false if ( Now + wait duration > time limit )
-// otherwise it return true
+// otherwise it return true.
 func canRetry(dur time.Duration, timeLimit int64) bool {
 	return fastime.Now().Add(dur).UnixNano() < timeLimit
 }

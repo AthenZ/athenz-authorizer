@@ -6,21 +6,22 @@
 [![GoDoc](http://godoc.org/github.com/AthenZ/athenz-authorizer?status.svg)](http://godoc.org/github.com/AthenZ/athenz-authorizer)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](code_of_conduct.md)
 
-<!-- TOC insertAnchor:false -->
+<!-- TOC -->
 
 - [What is Athenz authorizer](#what-is-athenz-authorizer)
 - [Usage](#usage)
 - [How it works](#how-it-works)
-    - [Athenz public key daemon](#athenz-public-key-daemon)
-    - [Athenz policy daemon](#athenz-policy-daemon)
+  - [Athenz public key daemon](#athenz-public-key-daemon)
+  - [Athenz policy daemon](#athenz-policy-daemon)
 - [Configuration](#configuration)
-    - [AccessTokenParam](#accesstokenparam)
+  - [AccessTokenParam](#accesstokenparam)
 - [License](#license)
 - [Contributor License Agreement](#contributor-license-agreement)
 - [About releases](#about-releases)
 - [Authors](#authors)
 
 <!-- /TOC -->
+<!--markdownlint-disable MD013-->
 
 ## What is Athenz authorizer
 
@@ -187,7 +188,7 @@ Note that only for contributions to the `athenz-authorizer` repository on the [G
 ## About releases
 
 - Releases
-    - [![GitHub release (latest by date)](https://img.shields.io/github/v/release/AthenZ/athenz-authorizer?style=flat-square&label=Github%20version)](https://github.com/AthenZ/athenz-authorizer/releases/latest)
+  - [![GitHub release (latest by date)](https://img.shields.io/github/v/release/AthenZ/athenz-authorizer?style=flat-square&label=Github%20version)](https://github.com/AthenZ/athenz-authorizer/releases/latest)
 
 ## Authors
 

@@ -20,6 +20,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
+	"time"
 
 	"github.com/AthenZ/athenz-authorizer/v5/jwk"
 	"github.com/golang-jwt/jwt/v4"
@@ -32,13 +33,13 @@ const (
 	confirmMethodProxyPrincipals = "proxy-principals#spiffe"
 )
 
-// errNilHeader is "header is nil"
+// errNilHeader is "header is nil".
 var errNilHeader = errors.New("header is nil")
 
-// errKeyNotFoundInHeader is "key not written in header"
+// errKeyNotFoundInHeader is "key not written in header".
 var errKeyNotFoundInHeader = errors.New("key not written in header")
 
-// errHeaderValueNotString is "header value not written as string"
+// errHeaderValueNotString is "header value not written as string".
 var errHeaderValueNotString = errors.New("header value not written as string")
 
 // Processor represents the access token parser interface.
@@ -50,9 +51,9 @@ type atp struct {
 	jwkp                                  jwk.Provider
 	enableMTLSCertificateBoundAccessToken bool
 	// If you go back to the issue time, set that time. Subtract if necessary (for example, token issuance time).
-	clientCertificateGoBackSeconds int64
+	clientCertificateGoBackSeconds time.Duration
 	// The number of seconds to allow for a failed CNF check due to a client certificate being updated.
-	clientCertificateOffsetSeconds int64
+	clientCertificateOffsetSeconds time.Duration
 	enableVerifyClientID           bool
 	authorizedClientIDs            map[string][]string
 }
@@ -175,20 +176,20 @@ func (a *atp) validateCertPrincipal(cert *x509.Certificate, claims *OAuth2Access
 	}
 
 	// usecase: new cert + old token, after certificate rotation
-	atIssueTime := claims.IssuedAt
-	certActualIssueTime := cert.NotBefore.Unix() + a.clientCertificateGoBackSeconds
+	atIssueTime := claims.IssuedAt.Time
+	certActualIssueTime := cert.NotBefore.Add(a.clientCertificateGoBackSeconds)
 	// Issue time check. If the certificate had been updated, it would have been issued later than the token.
-	if certActualIssueTime < atIssueTime {
+	if certActualIssueTime.Before(atIssueTime) {
 		return errors.Errorf("error certificate: issued before access token: cert = %v, tok = %v", certActualIssueTime, atIssueTime)
 	}
 	// Issue time check. Determine if certificate's issue time is within an allowed range
-	if certActualIssueTime > atIssueTime+a.clientCertificateOffsetSeconds {
+	if certActualIssueTime.After(atIssueTime.Add(a.clientCertificateOffsetSeconds)) {
 		return errors.Errorf("error certificate: access token too old: cert = %v, offset = %v, tok = %v", certActualIssueTime, a.clientCertificateOffsetSeconds, atIssueTime)
 	}
 	return nil
 }
 
-// keyFunc extract the key id from the token, and return corresponding key
+// keyFunc extract the key id from the token, and return corresponding key.
 func (a *atp) keyFunc(token *jwt.Token) (interface{}, error) {
 	keyID, err := getAsStringFromHeader(&token.Header, jws.KeyIDKey)
 	// kid is required and will return if an error occurs

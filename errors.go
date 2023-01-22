@@ -24,30 +24,30 @@ import (
 )
 
 var (
-	// ErrRoleTokenInvalid "Access denied due to invalid RoleToken"
+	// ErrRoleTokenInvalid "Access denied due to invalid RoleToken".
 	ErrRoleTokenInvalid = role.ErrRoleTokenInvalid
-	// ErrRoleTokenExpired "Access denied due to expired RoleToken"
+	// ErrRoleTokenExpired "Access denied due to expired RoleToken".
 	ErrRoleTokenExpired = role.ErrRoleTokenExpired
 
-	// ErrDomainMismatch "Access denied due to domain mismatch between Resource and RoleToken"
+	// ErrDomainMismatch "Access denied due to domain mismatch between Resource and RoleToken".
 	ErrDomainMismatch = policy.ErrDomainMismatch
-	// ErrDomainNotFound "Access denied due to domain not found in library cache"
+	// ErrDomainNotFound "Access denied due to domain not found in library cache".
 	ErrDomainNotFound = policy.ErrDomainNotFound
-	// ErrDomainExpired "Access denied due to expired domain policy file"
+	// ErrDomainExpired "Access denied due to expired domain policy file".
 	ErrDomainExpired = policy.ErrDomainExpired
-	// ErrNoMatch "Access denied due to no match to any of the assertions defined in domain policy file"
+	// ErrNoMatch "Access denied due to no match to any of the assertions defined in domain policy file".
 	ErrNoMatch = policy.ErrNoMatch
-	// ErrInvalidPolicyResource "Access denied due to invalid/empty policy resources"
+	// ErrInvalidPolicyResource "Access denied due to invalid/empty policy resources".
 	ErrInvalidPolicyResource = policy.ErrInvalidPolicyResource
-	// ErrDenyByPolicy "Access Check was explicitly denied"
+	// ErrDenyByPolicy "Access Check was explicitly denied".
 	ErrDenyByPolicy = policy.ErrDenyByPolicy
-	// ErrFetchPolicy "Error fetching athenz policy"
+	// ErrFetchPolicy "Error fetching athenz policy".
 	ErrFetchPolicy = policy.ErrFetchPolicy
 
-	// ErrInvalidParameters "Access denied due to invalid/empty action/resource values"
+	// ErrInvalidParameters "Access denied due to invalid/empty action/resource values".
 	ErrInvalidParameters = errors.New("Access denied due to invalid/empty action/resource values")
 
-	// ErrInvalidCredentials "Access denied due to invalid credentials"
+	// ErrInvalidCredentials "Access denied due to invalid credentials".
 	ErrInvalidCredentials = errors.New("Access denied due to invalid credentials")
 )
 

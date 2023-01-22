@@ -29,7 +29,7 @@ var (
 	schemeOnce = sync.Once{}
 )
 
-// TrimHTTPScheme trim the URL scheme
+// TrimHTTPScheme trims the URL scheme.
 func TrimHTTPScheme(url string) string {
 	httpOnce.Do(func() {
 		httpReg = regexp.MustCompile("^(http|https)://")
@@ -38,7 +38,7 @@ func TrimHTTPScheme(url string) string {
 	return httpReg.ReplaceAllString(url, "")
 }
 
-// HasScheme check if url has any scheme
+// HasScheme checks if url has any scheme.
 func HasScheme(url string) bool {
 	schemeOnce.Do(func() {
 		schemeReg = regexp.MustCompile("^[a-zA-Z][a-zA-Z0-9+-.]*://")

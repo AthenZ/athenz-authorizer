@@ -37,7 +37,7 @@ import (
 	"github.com/AthenZ/athenz-authorizer/v5/role"
 )
 
-// Authorizerd represents a daemon for user to verify the role token
+// Authorizerd represents a daemon for user to verify the role token.
 type Authorizerd interface {
 	// Init initializes the child daemons synchronously
 	Init(ctx context.Context) error
@@ -124,7 +124,7 @@ const (
 	accessToken
 )
 
-// New creates the Authorizerd object with the options
+// New creates the Authorizerd object with the options.
 func New(opts ...Option) (Authorizerd, error) {
 	var (
 		prov = &authority{
@@ -426,15 +426,15 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 			glg.Infof("error parse and validate access token, err: %v", err)
 			return nil, errors.Wrap(err, "error authorize access token")
 		}
-		domain = ac.Audience
+		domain = ac.Audience[0]
 		roles = ac.Scope
 		p = &oAuthAccessToken{
 			principal: principal{
 				name:       ac.Subject,
 				roles:      ac.Scope,
-				domain:     ac.Audience,
-				issueTime:  ac.IssuedAt,
-				expiryTime: ac.ExpiresAt,
+				domain:     ac.Audience[0],
+				issueTime:  ac.IssuedAt.Time.Unix(),
+				expiryTime: ac.ExpiresAt.Time.Unix(),
 			},
 			clientID: ac.ClientID,
 		}
@@ -547,13 +547,13 @@ func (a *authority) VerifyRoleCert(ctx context.Context, peerCerts []*x509.Certif
 	return errors.Wrap(err, "role certificates unauthorized")
 }
 
-// AuthorizeRoleCert verifies the role certificate for specific resource and returns the result of verifying or verification error if unauthorized. (unimplemented)
+// AuthorizeRoleCert verifies the role certificate for specific resource and returns the result of verifying or verification error if unauthorized. (unimplemented).
 func (a *authority) AuthorizeRoleCert(ctx context.Context, peerCerts []*x509.Certificate, act, res string) (Principal, error) {
 	// TODO VerifyRoleCert has not yet been implemented to return a Principal
 	return nil, errors.New("AuthorizeRoleCert has not yet been implemented")
 }
 
-// GetPolicyCache returns the cached policy data
+// GetPolicyCache returns the cached policy data.
 func (a *authority) GetPolicyCache(ctx context.Context) map[string]interface{} {
 	if !a.disablePolicyd {
 		return a.policyd.GetPolicyCache(ctx)
