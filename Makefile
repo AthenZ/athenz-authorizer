@@ -32,7 +32,7 @@ deps: clean
 	rm -rf vendor
 
 lint:
-	gometalinter --enable-all . | rg -v comment
+	golangci-lint run -c ./.golangci.yml
 
 test: clean init
 	GO111MODULE=on go test --race -v ./...
