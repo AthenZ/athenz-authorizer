@@ -33,6 +33,6 @@ _description_with_details_and_reasoning_
 - [ ] Passed all pipeline checking
 
 ## Checklist for maintainer
-- [ ] Use `Squash and merge`
-- [ ] Double-confirm the merge message has prefix `[skip ci]`/`[ci skip]`/`[no ci]`/`[skip actions]`/`[actions skip]`
-- [ ] Delete the branch after merge
+- Use `Squash and merge`
+- Double-confirm the merge message has prefix `[skip ci]`/`[ci skip]`/`[no ci]`/`[skip actions]`/`[actions skip]`
+- Delete the branch after merge
