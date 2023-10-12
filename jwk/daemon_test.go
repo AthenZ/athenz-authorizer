@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -793,10 +793,11 @@ func Test_jwkd_getKey(t *testing.T) {
 		jwkSetURL string
 	}
 	type test struct {
-		name   string
-		fields fields
-		args   args
-		want   interface{}
+		name      string
+		fields    fields
+		args      args
+		want      interface{}
+		checkFunc func(interface{}) error
 	}
 	genKey := func() *rsa.PrivateKey {
 		k, _ := rsa.GenerateKey(rand.Reader, 2048)
@@ -812,7 +813,7 @@ func Test_jwkd_getKey(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			rsaKey := genKey()
+			rsaKey := &genKey().PublicKey
 			set := jwk.NewSet()
 			set.Add(newKey(rsaKey, "dummyID"))
 			key := sync.Map{}
@@ -832,7 +833,7 @@ func Test_jwkd_getKey(t *testing.T) {
 			}
 		}(),
 		func() test {
-			rsaKey := genKey()
+			rsaKey := &genKey().PublicKey
 			set := jwk.NewSet()
 			set.Add(newKey(rsaKey, "dummyID"))
 			key := sync.Map{}
@@ -852,7 +853,7 @@ func Test_jwkd_getKey(t *testing.T) {
 			}
 		}(),
 		func() test {
-			rsaKey := genKey()
+			rsaKey := &genKey().PublicKey
 			set := jwk.NewSet()
 			set.Add(newKey(rsaKey, ""))
 			key := sync.Map{}
@@ -872,7 +873,7 @@ func Test_jwkd_getKey(t *testing.T) {
 			}
 		}(),
 		func() test {
-			rsaKey := genKey()
+			rsaKey := &genKey().PublicKey
 			set := jwk.NewSet()
 			set.Add(newKey(rsaKey, ""))
 			key := sync.Map{}
@@ -892,9 +893,9 @@ func Test_jwkd_getKey(t *testing.T) {
 			}
 		}(),
 		func() test {
-			rsaKey1 := genKey()
-			rsaKey2 := genKey()
-			rsaKey3 := genKey()
+			rsaKey1 := &genKey().PublicKey
+			rsaKey2 := &genKey().PublicKey
+			rsaKey3 := &genKey().PublicKey
 			set := jwk.NewSet()
 			set.Add(newKey(rsaKey1, "dummyID1"))
 			set.Add(newKey(rsaKey2, "dummyID2"))
@@ -962,26 +963,33 @@ func Test_jwkd_getKey(t *testing.T) {
 			}
 		}(),
 		func() test {
-			rsaPubKey := genKey().Public()
+			rsaPrivateKey := genKey()
 			set := jwk.NewSet()
-			set.Add(newKey(rsaPubKey, "rsaPubKeyID"))
+			set.Add(newKey(rsaPrivateKey, "rsaPrivateKeyID"))
 			key := sync.Map{}
 			key.Store("dummy.com", set)
 
 			return test{
-				name: "get RSA public key success",
+				name: "get RSA private key success",
 				fields: fields{
 					keys:          &key,
 					athenzJwksURL: "dummy.com",
 				},
 				args: args{
-					keyID: "rsaPubKeyID",
+					keyID: "rsaPrivateKeyID",
 				},
-				want: rsaPubKey,
+				want: rsaPrivateKey,
+				checkFunc: func(got interface{}) error {
+					// rsaPrivateKey has private fields, which we can't compare with reflect.DeepEqual.
+					if rsaPrivateKey.Equal(got.(*rsa.PrivateKey)) {
+						return nil
+					}
+					return errors.Errorf("jwkd.getKey() = %#v, want %#v", got, rsaPrivateKey)
+				},
 			}
 		}(),
 		func() test {
-			rsaKey := genKey()
+			rsaKey := &genKey().PublicKey
 			set := jwk.NewSet()
 			set.Add(newKey(rsaKey, "dummyID"))
 			key := sync.Map{}
@@ -1001,7 +1009,7 @@ func Test_jwkd_getKey(t *testing.T) {
 			}
 		}(),
 		func() test {
-			rsaKey1 := genKey()
+			rsaKey1 := &genKey().PublicKey
 			set1 := jwk.NewSet()
 			set1.Add(newKey(rsaKey1, "dummyID"))
 			rsaKey2 := genKey()
@@ -1025,7 +1033,7 @@ func Test_jwkd_getKey(t *testing.T) {
 			}
 		}(),
 		func() test {
-			rsaKey := genKey()
+			rsaKey := &genKey().PublicKey
 			set := jwk.NewSet()
 			set.Add(newKey(rsaKey, "dummyID"))
 			key := sync.Map{}
@@ -1055,6 +1063,12 @@ func Test_jwkd_getKey(t *testing.T) {
 				keys:          tt.fields.keys,
 			}
 			if got := j.getKey(tt.args.keyID, tt.args.jwkSetURL); !reflect.DeepEqual(got, tt.want) {
+				if tt.checkFunc != nil {
+					if err := tt.checkFunc(got); err != nil {
+						t.Error(err)
+					}
+					return
+				}
 				t.Errorf("jwkd.getKey() = %#v, want %#v", got, tt.want)
 			}
 		})

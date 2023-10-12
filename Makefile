@@ -1,6 +1,6 @@
 GO_VERSION:=$(shell go version)
 
-.PHONY: all clean bench bench-all profile lint test contributors update install
+.PHONY: all clean bench bench-all profile lint test contributors update install upgrade
 
 all: clean install lint test bench
 
