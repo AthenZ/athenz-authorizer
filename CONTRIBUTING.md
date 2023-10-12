@@ -30,7 +30,7 @@ make test
 
 ## Dependency management
 
-The Athenz authorizer project uses [Go modules](https://golang.org/cmd/go/#hdr-Modules__module_versions__and_more) to manage dependencies on external packages. This requires a working Go environment with version 1.18 or greater installed.
+The Athenz authorizer project uses [Go modules](https://golang.org/cmd/go/#hdr-Modules__module_versions__and_more) to manage dependencies on external packages. This requires a working Go environment with version 1.21 or greater installed.
 
 To add or update a new dependency, use the `go get` command:
 

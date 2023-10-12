@@ -41,3 +41,7 @@ coverage:
 	go test -v -race -covermode=atomic -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
 	rm -f coverage.out
+
+upgrade:
+	go list -u -m all
+	go get -t -u ./...
