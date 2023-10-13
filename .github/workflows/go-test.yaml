@@ -23,9 +23,6 @@ on:
   pull_request:
     branches: [ master ]
 
-env:
-  GOLANG_VERSION: ^1.21
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -61,9 +58,9 @@ jobs:
         id: setup-go
         # You may pin to the exact commit or the version.
         # uses: https://github.com/actions/setup-go/tags
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
-          go-version: ${{ env.GOLANG_VERSION }}
+          go-version: "stable"
 
       # This action allows caching dependencies and build outputs to improve workflow execution time.
       # https://github.com/actions/cache
