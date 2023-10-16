@@ -62,20 +62,6 @@ jobs:
         with:
           go-version: "stable"
 
-      # This action allows caching dependencies and build outputs to improve workflow execution time.
-      # https://github.com/actions/cache
-      -
-        name: Cache Go Modules
-        id: cache-go
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
       # A GitHub Action for golang tests
       -
         name: Golang Tests
