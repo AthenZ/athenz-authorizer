@@ -11,10 +11,10 @@
 - [What is Athenz authorizer](#what-is-athenz-authorizer)
 - [Usage](#usage)
 - [How it works](#how-it-works)
-    - [Athenz public key daemon](#athenz-public-key-daemon)
-    - [Athenz policy daemon](#athenz-policy-daemon)
+  - [Athenz public key daemon](#athenz-public-key-daemon)
+  - [Athenz policy daemon](#athenz-policy-daemon)
 - [Configuration](#configuration)
-    - [AccessTokenParam](#accesstokenparam)
+  - [AccessTokenParam](#accesstokenparam)
 - [License](#license)
 - [Contributor License Agreement](#contributor-license-agreement)
 - [About releases](#about-releases)
@@ -162,21 +162,7 @@ The authorizer uses functional options pattern to initialize the instance. All t
 
 ## License
 
-```markdown
-Copyright (C) 2018 Yahoo Japan Corporation Athenz team.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-```
+This project is licensed under the terms of `Apache-2.0`.
 
 ## Contributor License Agreement
 
@@ -187,7 +173,7 @@ Note that only for contributions to the `athenz-authorizer` repository on the [G
 ## About releases
 
 - Releases
-    - [![GitHub release (latest by date)](https://img.shields.io/github/v/release/AthenZ/athenz-authorizer?style=flat-square&label=Github%20version)](https://github.com/AthenZ/athenz-authorizer/releases/latest)
+  - [![GitHub release (latest by date)](https://img.shields.io/github/v/release/AthenZ/athenz-authorizer?style=flat-square&label=Github%20version)](https://github.com/AthenZ/athenz-authorizer/releases/latest)
 
 ## Authors
 

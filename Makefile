@@ -45,3 +45,8 @@ coverage:
 upgrade:
 	go list -u -m all
 	go get -t -u ./...
+
+check-license-header:
+	# go install github.com/apache/skywalking-eyes/cmd/license-eye@latest
+	license-eye -c .licenserc.yaml header check
+	# license-eye -c .licenserc.yaml header fix
