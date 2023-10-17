@@ -15,8 +15,6 @@
   - [Athenz policy daemon](#athenz-policy-daemon)
 - [Configuration](#configuration)
   - [AccessTokenParam](#accesstokenparam)
-- [License](#license)
-- [Contributor License Agreement](#contributor-license-agreement)
 - [About releases](#about-releases)
 - [Authors](#authors)
 
@@ -159,16 +157,6 @@ The authorizer uses functional options pattern to initialize the instance. All t
 | certOffsetDur        | Offset window to accept access token with a mismatching certificate thumbprint | 1 Hour            | No           | "1h"                                           |
 | verifyClientID       | Use authorized client ID verification                                          | false             | No           | false                                          |
 | authorizedClientIDs  | Authorized client ID to certificate common name map                            | nil               | No           | \{ "atClientID": \{ "certCN1", "certCN2" \} \} |
-
-## License
-
-This project is licensed under the terms of `Apache-2.0`.
-
-## Contributor License Agreement
-
-This project requires contributors to agree to a [Contributor License Agreement (CLA)](https://gist.github.com/ydnjp/3095832f100d5c3d2592).
-
-Note that only for contributions to the `athenz-authorizer` repository on the [GitHub](https://github.com/AthenZ/athenz-authorizer), the contributors of them shall be deemed to have agreed to the CLA without individual written agreements.
 
 ## About releases
 
