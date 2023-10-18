@@ -61,6 +61,8 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: "stable"
+          go-version-file: './go.mod'
+          cache: true
 
       # A GitHub Action for golang tests
       -
@@ -71,3 +73,13 @@ jobs:
           rm -rf example
           go test -v -race -covermode=atomic -coverprofile=coverage.out ./...
           go tool cover -html=coverage.out -o coverage.html
+
+      # https://github.com/apache/skywalking-eyes
+      # issue: go version hard-coded: https://github.com/apache/skywalking-eyes/blob/5dfa68f93380a5e57259faaf95088b7f133b5778/header/action.yml#L47-L51
+      - name: Check License Header
+        uses: apache/skywalking-eyes/header@main
+        with:
+          log: "info" # optional: set the log level. The default value is `info`.
+          config: ".licenserc.yaml" # optional: set the config file. The default value is `.licenserc.yaml`.
+          token: "" # optional: the token that license eye uses when it needs to comment on the pull request. Set to empty ("") to disable commenting on pull request. The default value is ${{ github.token }}
+          mode: "check" # optional: Which mode License-Eye should be run in. Choices are `check` or `fix`. The default value is `check`.
