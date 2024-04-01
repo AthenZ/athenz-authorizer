@@ -69,11 +69,16 @@ func (pm *PubkeydMock) GetProvider() pubkey.Provider {
 }
 
 type PolicydMock struct {
-	UpdateFunc          func(context.Context) error
-	CheckPolicyRoleFunc func(ctx context.Context, domain string, roles []string, action, resource string) ([]string, error)
+	UpdateFunc                func(context.Context) error
+	CheckPolicyRoleFunc       func(ctx context.Context, domain string, roles []string, action, resource string) ([]string, error)
+	GetPrincipalCacheLenFunc  func() int
+	GetPrincipalCacheSizeFunc func() int64
 
 	policydExp  time.Duration
 	policyCache map[string][]*policy.Assertion
+
+	principalCacheLen  int
+	principalCacheSize int64
 }
 
 func (pdm *PolicydMock) Start(context.Context) <-chan error {
@@ -106,6 +111,14 @@ func (pdm *PolicydMock) CheckPolicyRoles(ctx context.Context, domain string, rol
 
 func (pdm *PolicydMock) GetPolicyCache(ctx context.Context) map[string][]*policy.Assertion {
 	return pdm.policyCache
+}
+
+func (pdm *PolicydMock) GetPrincipalCacheLen() int {
+	return pdm.principalCacheLen
+}
+
+func (pdm *PolicydMock) GetPrincipalCacheSize() int64 {
+	return pdm.principalCacheSize
 }
 
 type RoleProcessorMock struct {

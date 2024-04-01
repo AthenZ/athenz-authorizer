@@ -20,7 +20,9 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync/atomic"
 	"time"
+	"unsafe"
 
 	"github.com/golang-jwt/jwt/v4/request"
 	"github.com/kpango/gache/v2"
@@ -51,6 +53,8 @@ type Authorizerd interface {
 	VerifyRoleCert(ctx context.Context, peerCerts []*x509.Certificate, act, res string) error
 	AuthorizeRoleCert(ctx context.Context, peerCerts []*x509.Certificate, act, res string) (Principal, error)
 	GetPolicyCache(ctx context.Context) map[string][]*policy.Assertion
+	GetPrincipalCacheLen() int
+	GetPrincipalCacheSize() int64
 }
 
 type authorizer func(r *http.Request, act, res string) (Principal, error)
@@ -69,8 +73,9 @@ type authority struct {
 	client    *http.Client
 
 	// successful result cache
-	cache    gache.Gache[Principal]
-	cacheExp time.Duration
+	cache       gache.Gache[Principal]
+	cacheExp    time.Duration
+	memoryUsage *atomic.Int64
 
 	// roleCertURIPrefix
 	roleCertURIPrefix string
@@ -126,7 +131,8 @@ const (
 func New(opts ...Option) (Authorizerd, error) {
 	var (
 		prov = &authority{
-			cache: gache.New[Principal](),
+			cache:       gache.New[Principal](),
+			memoryUsage: &atomic.Int64{},
 		}
 		err    error
 		pkPro  pubkey.Provider
@@ -467,7 +473,45 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 		return fmt.Sprintf("set token result. masked tok: %s, masked key: %s, act: %s, res: %s", maskToken(m, tok), maskCacheKey(key.String(), tok), act, res)
 	})
 	a.cache.SetWithExpire(key.String(), p, a.cacheExp)
+
+	if ok {
+		a.memoryUsage.Add(principalCacheMemoryUsage(p) - principalCacheMemoryUsage(cached))
+	} else {
+		a.memoryUsage.Add(principalCacheMemoryUsage(p) + int64(len(key.String())))
+	}
 	return p, nil
+}
+
+func principalCacheMemoryUsage(p Principal) int64 {
+	structSize := int64(unsafe.Sizeof(p))
+	name := p.Name()
+	domain := p.Domain()
+
+	nameSize := int64(len(name)) + int64(unsafe.Sizeof(name))
+	domainSize := int64(len(domain)) + int64(unsafe.Sizeof(domain))
+
+	rolesSize := int64(unsafe.Sizeof(p.Roles()))
+	for _, role := range p.Roles() {
+		rolesSize += int64(len(role)) + int64(unsafe.Sizeof(role))
+	}
+
+	authorizedRolesSize := int64(unsafe.Sizeof(p.AuthorizedRoles()))
+	for _, role := range p.AuthorizedRoles() {
+		authorizedRolesSize += int64(len(role)) + int64(unsafe.Sizeof(role))
+	}
+
+	const int64Size = 8
+	timesSize := int64Size * 2
+
+	return structSize + nameSize + domainSize + rolesSize + authorizedRolesSize + int64(timesSize)
+}
+
+func (a *authority) GetPrincipalCacheLen() int {
+	return a.cache.Len()
+}
+
+func (a *authority) GetPrincipalCacheSize() int64 {
+	return a.memoryUsage.Load()
 }
 
 // Verify returns error of verification. Returns nil if ANY authorizer succeeds (OR logic).

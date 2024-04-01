@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -664,6 +665,7 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 		cache              gache.Gache[Principal]
 		cacheExp           time.Duration
 		roleTokenProcessor role.Processor
+		memoryUsage        *atomic.Int64
 	}
 	type test struct {
 		name       string
@@ -702,6 +704,7 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 					roleTokenProcessor: rpm,
 					cache:              c,
 					cacheExp:           time.Minute,
+					memoryUsage:        &atomic.Int64{},
 				},
 				wantErr:    "",
 				wantResult: p,
@@ -856,6 +859,7 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 				roleProcessor: tt.fields.roleTokenProcessor,
 				cache:         tt.fields.cache,
 				cacheExp:      tt.fields.cacheExp,
+				memoryUsage:   tt.fields.memoryUsage,
 			}
 			err := prov.VerifyRoleToken(tt.args.ctx, tt.args.tok, tt.args.act, tt.args.res)
 			if err != nil {
@@ -921,6 +925,7 @@ func Test_authorizer_authorize(t *testing.T) {
 		disablePolicyd        bool
 		translator            Translator
 		resourcePrefix        string
+		memoryUsage           *atomic.Int64
 	}
 	type args struct {
 		ctx   context.Context
@@ -968,6 +973,7 @@ func Test_authorizer_authorize(t *testing.T) {
 					policyd:        pdm,
 					disablePolicyd: true,
 					roleProcessor:  rpm,
+					memoryUsage:    &atomic.Int64{},
 				},
 				args: args{
 					m:   roleToken,
@@ -1008,6 +1014,7 @@ func Test_authorizer_authorize(t *testing.T) {
 					policyd:        pdm,
 					disablePolicyd: true,
 					roleProcessor:  rpm,
+					memoryUsage:    &atomic.Int64{},
 				},
 				args: args{
 					m:   roleToken,
@@ -1049,6 +1056,7 @@ func Test_authorizer_authorize(t *testing.T) {
 					policyd:        pdm,
 					disablePolicyd: false,
 					roleProcessor:  rpm,
+					memoryUsage:    &atomic.Int64{},
 				},
 				args: args{
 					m:   roleToken,
@@ -1101,6 +1109,7 @@ func Test_authorizer_authorize(t *testing.T) {
 					disablePolicyd: false,
 					roleProcessor:  rpm,
 					translator:     mr,
+					memoryUsage:    &atomic.Int64{},
 				},
 				args: args{
 					m:     roleToken,
@@ -1154,6 +1163,7 @@ func Test_authorizer_authorize(t *testing.T) {
 					disablePolicyd: false,
 					roleProcessor:  rpm,
 					translator:     mr,
+					memoryUsage:    &atomic.Int64{},
 				},
 				args: args{
 					m:     roleToken,
@@ -1198,6 +1208,7 @@ func Test_authorizer_authorize(t *testing.T) {
 					policyd:        pdm,
 					disablePolicyd: false,
 					roleProcessor:  rpm,
+					memoryUsage:    &atomic.Int64{},
 				},
 				args: args{
 					m:     roleToken,
@@ -1250,6 +1261,7 @@ func Test_authorizer_authorize(t *testing.T) {
 					disablePolicyd: false,
 					roleProcessor:  rpm,
 					resourcePrefix: "/public",
+					memoryUsage:    &atomic.Int64{},
 				},
 				args: args{
 					m:     roleToken,
@@ -1289,6 +1301,7 @@ func Test_authorizer_authorize(t *testing.T) {
 				disablePolicyd:        tt.fields.disablePolicyd,
 				translator:            tt.fields.translator,
 				resourcePrefix:        tt.fields.resourcePrefix,
+				memoryUsage:           tt.fields.memoryUsage,
 			}
 			p, err := a.authorize(tt.args.ctx, tt.args.m, tt.args.tok, tt.args.act, tt.args.res, tt.args.query, tt.args.cert)
 			if err != nil {
@@ -1769,6 +1782,7 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 		accessProcessor access.Processor
 		cache           gache.Gache[Principal]
 		cacheExp        time.Duration
+		memoryUsage     *atomic.Int64
 	}
 	type args struct {
 		ctx  context.Context
@@ -1833,6 +1847,7 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 					accessProcessor: apm,
 					cache:           c,
 					cacheExp:        time.Minute,
+					memoryUsage:     &atomic.Int64{},
 				},
 				wantErr:    "",
 				wantResult: p,
@@ -1905,6 +1920,7 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 					accessProcessor: apm,
 					cache:           c,
 					cacheExp:        time.Minute,
+					memoryUsage:     &atomic.Int64{},
 				},
 				wantErr:    "",
 				wantResult: p,
@@ -2199,6 +2215,7 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 					accessProcessor: apm,
 					cache:           c,
 					cacheExp:        time.Minute,
+					memoryUsage:     &atomic.Int64{},
 				},
 				wantErr:    "",
 				wantResult: p,
@@ -2268,6 +2285,7 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 				accessProcessor: tt.fields.accessProcessor,
 				cache:           tt.fields.cache,
 				cacheExp:        tt.fields.cacheExp,
+				memoryUsage:     tt.fields.memoryUsage,
 			}
 			err := a.VerifyAccessToken(tt.args.ctx, tt.args.tok, tt.args.act, tt.args.res, tt.args.cert)
 			if err != nil {
