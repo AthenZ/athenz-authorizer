@@ -2,6 +2,7 @@ header:
   license:
     spdx-id: Apache-2.0
     copyright-owner: LY Corporation
+    copyright-year: '2023'
     software-name: athenz-authorizer
   paths:
     - '**/*.go'

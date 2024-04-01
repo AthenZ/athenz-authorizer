@@ -28,7 +28,7 @@ import (
 	"github.com/AthenZ/athenz-authorizer/v5/pubkey"
 	"github.com/AthenZ/athenz/utils/zpe-updater/util"
 	"github.com/kpango/fastime"
-	"github.com/kpango/gache"
+	"github.com/kpango/gache/v2"
 	"github.com/kpango/glg"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
@@ -40,7 +40,7 @@ type Daemon interface {
 	Update(context.Context) error
 	CheckPolicy(ctx context.Context, domain string, roles []string, action, resource string) error
 	CheckPolicyRoles(ctx context.Context, domain string, roles []string, action, resource string) ([]string, error)
-	GetPolicyCache(context.Context) map[string]interface{}
+	GetPolicyCache(context.Context) map[string][]*Assertion
 }
 
 type roleEffect struct {
@@ -54,7 +54,7 @@ type policyd struct {
 	// The []*Assertion contains deny policies first, and following the allow policies
 	// When CheckPolicy function called, the []*Assertion is check by order, in current implementation the deny policy is prioritize,
 	// so we need to put the deny policies in lower index.
-	rolePolicies *gache.Gache
+	rolePolicies *gache.Gache[[]*Assertion]
 
 	expiryMargin  time.Duration // force update policy before actual expiry by margin duration
 	refreshPeriod time.Duration
@@ -72,7 +72,7 @@ type policyd struct {
 
 // New represent the constructor of Policyd
 func New(opts ...Option) (Daemon, error) {
-	g := gache.New()
+	g := gache.New[[]*Assertion]()
 	p := &policyd{
 		rolePolicies: &g,
 	}
@@ -156,7 +156,7 @@ func (p *policyd) Update(ctx context.Context) error {
 	jobID := fastime.Now().Unix()
 	glg.Infof("[%d] will update policy", jobID)
 	eg := errgroup.Group{}
-	rp := gache.New()
+	rp := gache.New[[]*Assertion]()
 
 	for _, fetcher := range p.fetchers {
 		f := fetcher // for closure
@@ -194,7 +194,7 @@ func (p *policyd) Update(ctx context.Context) error {
 		return fmt.Sprintf("cache before swap, old: %p %v; new: %p %v", *p.rolePolicies, (*p.rolePolicies).Len(), rp, rp.Len())
 	})
 	curRpPtrPtr := (*unsafe.Pointer)(unsafe.Pointer(&p.rolePolicies))
-	oldRpPtr := (*gache.Gache)(atomic.SwapPointer(curRpPtrPtr, unsafe.Pointer(&rp)))
+	oldRpPtr := (*gache.Gache[[]*Assertion])(atomic.SwapPointer(curRpPtrPtr, unsafe.Pointer(&rp)))
 	glg.Debugf("tmp cache becomes effective")
 	glg.DebugFunc(func() string {
 		return fmt.Sprintf("cache after swap, old: %p %v; new: %p %v", *p.rolePolicies, (*p.rolePolicies).Len(), *oldRpPtr, (*oldRpPtr).Len())
@@ -232,7 +232,7 @@ func (p *policyd) CheckPolicyRoles(ctx context.Context, domain string, roles []s
 		wg.Add(len(roles))
 
 		curRpPtrPtr := (*unsafe.Pointer)(unsafe.Pointer(&p.rolePolicies))
-		rp := *(*gache.Gache)(atomic.LoadPointer(curRpPtrPtr))
+		rp := *(*gache.Gache[[]*Assertion])(atomic.LoadPointer(curRpPtrPtr))
 
 		for _, role := range roles {
 			dr := fmt.Sprintf("%s:role.%s", domain, role)
@@ -248,7 +248,7 @@ func (p *policyd) CheckPolicyRoles(ctx context.Context, domain string, roles []s
 						return
 					}
 
-					for _, ass := range asss.([]*Assertion) {
+					for _, ass := range asss {
 						glg.Debugf("Checking policy domain: %s, role: %v, action: %s, resource: %s, assertion: %v", domain, roles, action, resource, ass)
 						select {
 						case <-cctx.Done():
@@ -288,13 +288,13 @@ func (p *policyd) CheckPolicyRoles(ctx context.Context, domain string, roles []s
 }
 
 // GetPolicyCache returns the cached role policy data
-func (p *policyd) GetPolicyCache(ctx context.Context) map[string]interface{} {
+func (p *policyd) GetPolicyCache(ctx context.Context) map[string][]*Assertion {
 	curRpPtrPtr := (*unsafe.Pointer)(unsafe.Pointer(&p.rolePolicies))
-	rp := *(*gache.Gache)(atomic.LoadPointer(curRpPtrPtr))
+	rp := *(*gache.Gache[[]*Assertion])(atomic.LoadPointer(curRpPtrPtr))
 	return rp.ToRawMap(ctx)
 }
 
-func fetchAndCachePolicy(ctx context.Context, g gache.Gache, f Fetcher) error {
+func fetchAndCachePolicy(ctx context.Context, g gache.Gache[[]*Assertion], f Fetcher) error {
 	sp, err := f.FetchWithRetry(ctx)
 	if err != nil {
 		errMsg := "fetch policy fail"
@@ -318,7 +318,7 @@ func fetchAndCachePolicy(ctx context.Context, g gache.Gache, f Fetcher) error {
 	return nil
 }
 
-func simplifyAndCachePolicy(ctx context.Context, rp gache.Gache, sp *SignedPolicy) error {
+func simplifyAndCachePolicy(ctx context.Context, rp gache.Gache[[]*Assertion], sp *SignedPolicy) error {
 	eg := errgroup.Group{}
 	assm := new(sync.Map) // assertion map
 
@@ -365,7 +365,7 @@ func simplifyAndCachePolicy(ctx context.Context, rp gache.Gache, sp *SignedPolic
 
 		var asss []*Assertion
 		if p, ok := rp.Get(ass.Role); ok {
-			asss = p.([]*Assertion)
+			asss = p
 			if a.Effect == nil {
 				asss = append(asss, a) // append allowed policies to the end of the slice
 			} else {

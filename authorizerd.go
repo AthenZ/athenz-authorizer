@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4/request"
-	"github.com/kpango/gache"
+	"github.com/kpango/gache/v2"
 	"github.com/kpango/glg"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
@@ -50,7 +50,7 @@ type Authorizerd interface {
 	AuthorizeRoleToken(ctx context.Context, tok, act, res string) (Principal, error)
 	VerifyRoleCert(ctx context.Context, peerCerts []*x509.Certificate, act, res string) error
 	AuthorizeRoleCert(ctx context.Context, peerCerts []*x509.Certificate, act, res string) (Principal, error)
-	GetPolicyCache(ctx context.Context) map[string]interface{}
+	GetPolicyCache(ctx context.Context) map[string][]*policy.Assertion
 }
 
 type authorizer func(r *http.Request, act, res string) (Principal, error)
@@ -69,7 +69,7 @@ type authority struct {
 	client    *http.Client
 
 	// successful result cache
-	cache    gache.Gache
+	cache    gache.Gache[Principal]
 	cacheExp time.Duration
 
 	// roleCertURIPrefix
@@ -126,7 +126,7 @@ const (
 func New(opts ...Option) (Authorizerd, error) {
 	var (
 		prov = &authority{
-			cache: gache.New(),
+			cache: gache.New[Principal](),
 		}
 		err    error
 		pkPro  pubkey.Provider
@@ -552,10 +552,10 @@ func (a *authority) AuthorizeRoleCert(ctx context.Context, peerCerts []*x509.Cer
 }
 
 // GetPolicyCache returns the cached policy data
-func (a *authority) GetPolicyCache(ctx context.Context) map[string]interface{} {
+func (a *authority) GetPolicyCache(ctx context.Context) map[string][]*policy.Assertion {
 	if !a.disablePolicyd {
 		return a.policyd.GetPolicyCache(ctx)
 	} else {
-		return make(map[string]interface{})
+		return make(map[string][]*policy.Assertion)
 	}
 }
