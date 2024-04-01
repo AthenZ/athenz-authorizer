@@ -27,7 +27,7 @@ import (
 
 	authcore "github.com/AthenZ/athenz/libs/go/zmssvctoken"
 	cmp "github.com/google/go-cmp/cmp"
-	"github.com/kpango/gache"
+	"github.com/kpango/gache/v2"
 	"github.com/pkg/errors"
 )
 
@@ -173,7 +173,7 @@ func Test_pubkeyd_fetchPubKeyEntries(t *testing.T) {
 	type fields struct {
 		refreshPeriod   time.Duration
 		retryDelay      time.Duration
-		eTagCache       gache.Gache
+		eTagCache       gache.Gache[confCache]
 		eTagPurgePeriod time.Duration
 		eTagExpiry      time.Duration
 		athenzURL       string
@@ -209,7 +209,7 @@ func Test_pubkeyd_fetchPubKeyEntries(t *testing.T) {
 				fields: fields{
 					athenzURL:     strings.Replace(srv.URL, "https://", "", 1),
 					sysAuthDomain: "dummyDom",
-					eTagCache:     gache.New(),
+					eTagCache:     gache.New[confCache](),
 					eTagExpiry:    time.Minute,
 					client:        srv.Client(),
 					confCache: &AthenzConfig{
@@ -265,8 +265,8 @@ func Test_pubkeyd_fetchPubKeyEntries(t *testing.T) {
 			}))
 			srv := httptest.NewTLSServer(handler)
 
-			ec := gache.New()
-			ec.Set("dummyEnv", &confCache{
+			ec := gache.New[confCache]()
+			ec.Set("dummyEnv", confCache{
 				eTag: "dummyOldETag",
 				sac: &SysAuthConfig{
 					Modified: "2017-01-23T02:20:09.331Z",
@@ -307,7 +307,7 @@ func Test_pubkeyd_fetchPubKeyEntries(t *testing.T) {
 						return errors.New("cannot use ETag cache")
 					}
 
-					want := eTag.(*confCache).sac
+					want := eTag.sac
 					if !cmp.Equal(sac, want) {
 						return errors.Errorf("not match, got: %v, want: %v", sac, want)
 					}
@@ -336,8 +336,8 @@ func Test_pubkeyd_fetchPubKeyEntries(t *testing.T) {
 			}))
 			srv := httptest.NewTLSServer(handler)
 
-			ec := gache.New()
-			ec.Set("dummyEnv", &confCache{
+			ec := gache.New[confCache]()
+			ec.Set("dummyEnv", confCache{
 				eTag: "dummyOldETag",
 				sac:  &SysAuthConfig{},
 			})
@@ -401,7 +401,7 @@ func Test_pubkeyd_fetchPubKeyEntries(t *testing.T) {
 				fields: fields{
 					athenzURL:     strings.Replace(srv.URL, "https://", "", 1),
 					sysAuthDomain: "dummyDom",
-					eTagCache:     gache.New(),
+					eTagCache:     gache.New[confCache](),
 					eTagExpiry:    time.Minute,
 					client:        srv.Client(),
 					confCache: &AthenzConfig{
@@ -436,7 +436,7 @@ func Test_pubkeyd_fetchPubKeyEntries(t *testing.T) {
 				fields: fields{
 					athenzURL:     " ",
 					sysAuthDomain: "dummyDom",
-					eTagCache:     gache.New(),
+					eTagCache:     gache.New[confCache](),
 					eTagExpiry:    time.Minute,
 					client:        srv.Client(),
 					confCache: &AthenzConfig{
@@ -471,7 +471,7 @@ func Test_pubkeyd_fetchPubKeyEntries(t *testing.T) {
 				fields: fields{
 					athenzURL:     strings.Replace(srv.URL, "https://", "", 1),
 					sysAuthDomain: "dummyDom",
-					eTagCache:     gache.New(),
+					eTagCache:     gache.New[confCache](),
 					eTagExpiry:    time.Minute,
 					client:        srv.Client(),
 					confCache: &AthenzConfig{
@@ -547,7 +547,7 @@ func Test_pubkeyd_Update(t *testing.T) {
 	type fields struct {
 		refreshPeriod   time.Duration
 		retryDelay      time.Duration
-		eTagCache       gache.Gache
+		eTagCache       gache.Gache[confCache]
 		eTagPurgePeriod time.Duration
 		eTagExpiry      time.Duration
 		athenzURL       string
@@ -596,7 +596,7 @@ func Test_pubkeyd_Update(t *testing.T) {
 				fields: fields{
 					athenzURL:     strings.Replace(srv.URL, "https://", "", 1),
 					sysAuthDomain: "dummyDom",
-					eTagCache:     gache.New(),
+					eTagCache:     gache.New[confCache](),
 					eTagExpiry:    time.Minute,
 					client:        srv.Client(),
 					confCache: &AthenzConfig{
@@ -652,8 +652,8 @@ func Test_pubkeyd_Update(t *testing.T) {
 				}
 			}))
 			srv := httptest.NewTLSServer(handler)
-			ec := gache.New()
-			ec.Set("zms", &confCache{
+			ec := gache.New[confCache]()
+			ec.Set("zms", confCache{
 				eTag: "dummyETag",
 				sac: &SysAuthConfig{
 					Modified: "2017-01-23T02:20:09.331Z",
@@ -666,7 +666,7 @@ func Test_pubkeyd_Update(t *testing.T) {
 					},
 				},
 			})
-			ec.Set("zts", &confCache{
+			ec.Set("zts", confCache{
 				eTag: "dummyETag",
 				sac: &SysAuthConfig{
 					Modified: "2017-01-23T02:20:09.331Z",
@@ -766,7 +766,7 @@ func Test_pubkeyd_Update(t *testing.T) {
 				fields: fields{
 					athenzURL:     strings.Replace(srv.URL, "https://", "", 1),
 					sysAuthDomain: "dummyDom",
-					eTagCache:     gache.New(),
+					eTagCache:     gache.New[confCache](),
 					eTagExpiry:    time.Minute,
 					client:        srv.Client(),
 					confCache: &AthenzConfig{
@@ -817,7 +817,7 @@ func Test_pubkeyd_Update(t *testing.T) {
 				fields: fields{
 					athenzURL:     strings.Replace(srv.URL, "https://", "", 1),
 					sysAuthDomain: "dummyDom",
-					eTagCache:     gache.New(),
+					eTagCache:     gache.New[confCache](),
 					eTagExpiry:    time.Minute,
 					client:        srv.Client(),
 					confCache: &AthenzConfig{
@@ -868,7 +868,7 @@ func Test_pubkeyd_Update(t *testing.T) {
 				fields: fields{
 					athenzURL:     strings.Replace(srv.URL, "https://", "", 1),
 					sysAuthDomain: "dummyDom",
-					eTagCache:     gache.New(),
+					eTagCache:     gache.New[confCache](),
 					eTagExpiry:    time.Minute,
 					client:        srv.Client(),
 					confCache: &AthenzConfig{
@@ -915,7 +915,7 @@ func Test_pubkeyd_Start(t *testing.T) {
 	type fields struct {
 		refreshPeriod   time.Duration
 		retryDelay      time.Duration
-		eTagCache       gache.Gache
+		eTagCache       gache.Gache[confCache]
 		eTagPurgePeriod time.Duration
 		eTagExpiry      time.Duration
 		athenzURL       string
@@ -967,7 +967,7 @@ func Test_pubkeyd_Start(t *testing.T) {
 					sysAuthDomain:   "dummyDom",
 					refreshPeriod:   time.Minute,
 					retryDelay:      time.Minute,
-					eTagCache:       gache.New(),
+					eTagCache:       gache.New[confCache](),
 					eTagExpiry:      time.Minute,
 					eTagPurgePeriod: time.Minute,
 					client:          srv.Client(),
@@ -1033,14 +1033,14 @@ func Test_pubkeyd_Start(t *testing.T) {
 					if ecLen != wantEcLen {
 						return errors.Errorf("invalid length ZMSPubKeys. got: %d, want: %d", ecLen, wantEcLen)
 					}
-					c.eTagCache.Foreach(context.Background(), func(key string, val interface{}, _ int64) bool {
+					c.eTagCache.Range(context.Background(), func(key string, val confCache, _ int64) bool {
 						if key != "zms" && key != "zts" {
 							err = errors.Errorf("unexpected key %s", key)
 							return false
 						}
 						wantETag := fmt.Sprintf("dummy-%s-etag", key)
-						if val.(*confCache).eTag != wantETag {
-							err = errors.Errorf("unexpected ETag %s", val.(*confCache).eTag)
+						if val.eTag != wantETag {
+							err = errors.Errorf("unexpected ETag %s", val.eTag)
 							return false
 						}
 						return true
@@ -1082,7 +1082,7 @@ func Test_pubkeyd_Start(t *testing.T) {
 					sysAuthDomain:   "dummyDom",
 					refreshPeriod:   10 * time.Millisecond,
 					retryDelay:      time.Minute,
-					eTagCache:       gache.New(),
+					eTagCache:       gache.New[confCache](),
 					eTagExpiry:      time.Minute,
 					eTagPurgePeriod: time.Minute,
 					client:          srv.Client(),
@@ -1152,7 +1152,7 @@ func Test_pubkeyd_Start(t *testing.T) {
 					sysAuthDomain:   "dummyDom",
 					refreshPeriod:   time.Millisecond * 3,
 					retryDelay:      time.Millisecond,
-					eTagCache:       gache.New(),
+					eTagCache:       gache.New[confCache](),
 					eTagExpiry:      time.Minute,
 					eTagPurgePeriod: time.Minute,
 					client:          srv.Client(),
@@ -1176,14 +1176,14 @@ func Test_pubkeyd_Start(t *testing.T) {
 					ind := 0
 					var err error
 
-					c.eTagCache.Foreach(context.Background(), func(key string, val interface{}, _ int64) bool {
+					c.eTagCache.Range(context.Background(), func(key string, val confCache, _ int64) bool {
 						if key != "zms" && key != "zts" {
 							err = errors.Errorf("unexpected key %s", key)
 							return false
 						}
 						wantETag := fmt.Sprintf("dummy-%s-etag%d", key, 4)
-						if val.(*confCache).eTag != wantETag {
-							err = errors.Errorf("unexpected ETag %s, want: %s", val.(*confCache).eTag, wantETag)
+						if val.eTag != wantETag {
+							err = errors.Errorf("unexpected ETag %s, want: %s", val.eTag, wantETag)
 							return false
 						}
 						return true

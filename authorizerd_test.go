@@ -32,7 +32,7 @@ import (
 	"github.com/AthenZ/athenz-authorizer/v5/role"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/kpango/fastime"
-	"github.com/kpango/gache"
+	"github.com/kpango/gache/v2"
 	"github.com/pkg/errors"
 )
 
@@ -195,7 +195,7 @@ func Test_authorizer_initAuthorizers(t *testing.T) {
 		authorizers           []authorizer
 		athenzURL             string
 		client                *http.Client
-		cache                 gache.Gache
+		cache                 gache.Gache[Principal]
 		cacheExp              time.Duration
 		roleCertURIPrefix     string
 		disablePubkeyd        bool
@@ -481,7 +481,7 @@ func Test_authorizer_Start(t *testing.T) {
 		pubkeyd  pubkey.Daemon
 		policyd  policy.Daemon
 		jwkd     jwk.Daemon
-		cache    gache.Gache
+		cache    gache.Gache[Principal]
 		cacheExp time.Duration
 	}
 	type args struct {
@@ -510,7 +510,7 @@ func Test_authorizer_Start(t *testing.T) {
 					pubkeyd:  pdm,
 					policyd:  pm,
 					jwkd:     jd,
-					cache:    gache.New(),
+					cache:    gache.New[Principal](),
 					cacheExp: time.Minute,
 				},
 				args: args{
@@ -542,7 +542,7 @@ func Test_authorizer_Start(t *testing.T) {
 					pubkeyd:  pdm,
 					policyd:  pm,
 					jwkd:     jd,
-					cache:    gache.New(),
+					cache:    gache.New[Principal](),
 					cacheExp: time.Minute,
 				},
 				args: args{
@@ -574,7 +574,7 @@ func Test_authorizer_Start(t *testing.T) {
 					pubkeyd:  pdm,
 					policyd:  pm,
 					jwkd:     jd,
-					cache:    gache.New(),
+					cache:    gache.New[Principal](),
 					cacheExp: time.Minute,
 				},
 				args: args{
@@ -615,7 +615,7 @@ func Test_authorizer_Start(t *testing.T) {
 					pubkeyd:  pdm,
 					policyd:  pm,
 					jwkd:     jd,
-					cache:    gache.New(),
+					cache:    gache.New[Principal](),
 					cacheExp: time.Minute,
 				},
 				args: args{
@@ -661,7 +661,7 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 	}
 	type fields struct {
 		policyd            policy.Daemon
-		cache              gache.Gache
+		cache              gache.Gache[Principal]
 		cacheExp           time.Duration
 		roleTokenProcessor role.Processor
 	}
@@ -675,7 +675,7 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
 			rt := &role.Token{}
 			p := &principal{
 				name:       rt.Principal,
@@ -715,7 +715,7 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
 			rt := &role.Token{}
 			p := &principal{
 				name:       rt.Principal,
@@ -749,7 +749,7 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
 			c.Set("dummyTok:dummyAct:dummyRes", &principal{})
 			rpm := &RoleProcessorMock{
 				rt:      &role.Token{},
@@ -774,7 +774,7 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
 			c.Set("dummyTok:dummyAct:dummyRes", &principal{})
 			rpm := &RoleProcessorMock{
 				rt:      &role.Token{},
@@ -799,7 +799,7 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
 			rpm := &RoleProcessorMock{
 				wantErr: errors.New("cannot parse roletoken"),
 			}
@@ -822,7 +822,7 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
 			rpm := &RoleProcessorMock{
 				rt: &role.Token{},
 			}
@@ -908,7 +908,7 @@ func Test_authorizer_authorize(t *testing.T) {
 		roleProcessor         role.Processor
 		athenzURL             string
 		client                *http.Client
-		cache                 gache.Gache
+		cache                 gache.Gache[Principal]
 		cacheExp              time.Duration
 		roleCertURIPrefix     string
 		pubkeyRefreshPeriod   string
@@ -941,7 +941,7 @@ func Test_authorizer_authorize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
 			var count int
 			pdm := &PolicydMock{
 				CheckPolicyRoleFunc: func(ctx context.Context, domain string, roles []string, action, resource string) ([]string, error) {
@@ -987,7 +987,7 @@ func Test_authorizer_authorize(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
 			pdm := &PolicydMock{}
 			rt := &role.Token{}
 			p := &principal{
@@ -1028,7 +1028,7 @@ func Test_authorizer_authorize(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
 			pdm := &PolicydMock{}
 			rt := &role.Token{}
 			p := &principal{
@@ -1069,7 +1069,7 @@ func Test_authorizer_authorize(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
 			pdm := &PolicydMock{}
 			rt := &role.Token{
 				Domain: "domain",
@@ -1122,7 +1122,7 @@ func Test_authorizer_authorize(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
 			pdm := &PolicydMock{}
 			rt := &role.Token{
 				Domain: "domain",
@@ -1175,7 +1175,7 @@ func Test_authorizer_authorize(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
 			pdm := &PolicydMock{}
 			rt := &role.Token{
 				Domain: "domain",
@@ -1219,7 +1219,7 @@ func Test_authorizer_authorize(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
 			pdm := &PolicydMock{
 				CheckPolicyRoleFunc: func(ctx context.Context, domain string, roles []string, action, resource string) ([]string, error) {
 					if resource != "/public/path" {
@@ -1319,7 +1319,7 @@ func Test_authorizer_VerifyRoleCert(t *testing.T) {
 		roleProcessor         role.Processor
 		athenzURL             string
 		client                *http.Client
-		cache                 gache.Gache
+		cache                 gache.Gache[Principal]
 		cacheExp              time.Duration
 		roleCertURIPrefix     string
 		pubkeyRefreshPeriod   string
@@ -1605,7 +1605,7 @@ func Test_authorizer_GetPolicyCache(t *testing.T) {
 		roleProcessor         role.Processor
 		athenzURL             string
 		client                *http.Client
-		cache                 gache.Gache
+		cache                 gache.Gache[Principal]
 		cacheExp              time.Duration
 		roleCertURIPrefix     string
 		pubkeyRefreshPeriod   string
@@ -1624,7 +1624,7 @@ func Test_authorizer_GetPolicyCache(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   map[string]interface{}
+		want   map[string][]*policy.Assertion
 	}{
 		{
 			name: "GetPolicyCache success",
@@ -1644,7 +1644,7 @@ func Test_authorizer_GetPolicyCache(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 			},
-			want: make(map[string]interface{}),
+			want: make(map[string][]*policy.Assertion),
 		},
 	}
 	for _, tt := range tests {
@@ -1767,7 +1767,7 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 	type fields struct {
 		policyd         policy.Daemon
 		accessProcessor access.Processor
-		cache           gache.Gache
+		cache           gache.Gache[Principal]
 		cacheExp        time.Duration
 	}
 	type args struct {
@@ -1788,7 +1788,7 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 	tests := []test{
 		func() test {
 			now := fastime.Now()
-			c := gache.New()
+			c := gache.New[Principal]()
 			at := &access.OAuth2AccessTokenClaim{
 				Scope: []string{"role"},
 				BaseClaim: access.BaseClaim{
@@ -1851,7 +1851,7 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 		}(),
 		func() test {
 			now := fastime.Now()
-			c := gache.New()
+			c := gache.New[Principal]()
 			at := &access.OAuth2AccessTokenClaim{
 				Scope: []string{"role"},
 				BaseClaim: access.BaseClaim{
@@ -1923,7 +1923,7 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 		}(),
 		func() test {
 			now := fastime.Now()
-			c := gache.New()
+			c := gache.New[Principal]()
 			at := &access.OAuth2AccessTokenClaim{}
 			p := &oAuthAccessToken{
 				principal: principal{
@@ -1987,7 +1987,7 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 					CommonName: "subject cn",
 				},
 			}
-			c := gache.New()
+			c := gache.New[Principal]()
 			at := &access.OAuth2AccessTokenClaim{}
 			p := &oAuthAccessToken{
 				principal: principal{
@@ -2043,7 +2043,7 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
 			c.Set("dummyTok:dummyAct:dummyRes", &principal{})
 			apm := &AccessProcessorMock{
 				atc:     &access.OAuth2AccessTokenClaim{},
@@ -2068,7 +2068,7 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
 			c.Set("dummyTok:dummyAct:dummyRes", &principal{})
 			apm := &AccessProcessorMock{
 				atc:     &access.OAuth2AccessTokenClaim{},
@@ -2093,7 +2093,7 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
 			apm := &AccessProcessorMock{
 				wantErr: errors.New("cannot parse access token"),
 			}
@@ -2116,7 +2116,7 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
 			apm := &AccessProcessorMock{
 				atc: &access.OAuth2AccessTokenClaim{},
 			}
@@ -2152,7 +2152,7 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 					CommonName: "subject cn",
 				},
 			}
-			c := gache.New()
+			c := gache.New[Principal]()
 			at := &access.OAuth2AccessTokenClaim{
 				Scope: []string{"role"},
 				BaseClaim: access.BaseClaim{
@@ -2224,7 +2224,7 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 					CommonName: "subject cn",
 				},
 			}
-			c := gache.New()
+			c := gache.New[Principal]()
 			at := &access.OAuth2AccessTokenClaim{}
 			p := &oAuthAccessToken{
 				principal: principal{
