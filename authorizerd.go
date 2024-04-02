@@ -482,6 +482,7 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 	return p, nil
 }
 
+// principalCacheMemoryUsage returns memory usage of principal
 func principalCacheMemoryUsage(p Principal) int64 {
 	structSize := int64(unsafe.Sizeof(p))
 	name := p.Name()
@@ -506,10 +507,12 @@ func principalCacheMemoryUsage(p Principal) int64 {
 	return structSize + nameSize + domainSize + rolesSize + authorizedRolesSize + int64(timesSize)
 }
 
+// GetPrincipalCacheLen returns entries number of cached principals
 func (a *authority) GetPrincipalCacheLen() int {
 	return a.cache.Len()
 }
 
+// GetPrincipalCacheSize returns memory usage of cached principals
 func (a *authority) GetPrincipalCacheSize() int64 {
 	return a.memoryUsage.Load()
 }

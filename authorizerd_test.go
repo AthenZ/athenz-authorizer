@@ -1324,6 +1324,78 @@ func Test_authorizer_authorize(t *testing.T) {
 	}
 }
 
+func Test_authorizer_principalCacheMemoryUsage(t *testing.T) {
+	type args struct {
+		p Principal
+	}
+	type test struct {
+		name string
+		args args
+		want int64
+	}
+	tests := []test{
+		func() test {
+			rt := &role.Token{
+				Principal:  "dummyPrincipal",
+				Roles:      []string{"dummyRole"},
+				Domain:     "dummyDomain",
+				TimeStamp:  time.Now(),
+				ExpiryTime: time.Now().Add(time.Hour),
+			}
+			pc := &principal{
+				name:       rt.Principal,
+				roles:      rt.Roles,
+				domain:     rt.Domain,
+				issueTime:  rt.TimeStamp.Unix(),
+				expiryTime: rt.ExpiryTime.Unix(),
+			}
+			return test{
+				name: "principalCacheMemoryUsage return correct principal memory usage for role token",
+				args: args{
+					p: pc,
+				},
+				want: 162,
+			}
+		}(),
+		func() test {
+			at := &access.OAuth2AccessTokenClaim{
+				Scope: []string{"role"},
+				BaseClaim: access.BaseClaim{
+					StandardClaims: jwt.StandardClaims{
+						Audience: "domain",
+					},
+				},
+			}
+			pc := &oAuthAccessToken{
+				principal: principal{
+					name:            at.BaseClaim.Subject,
+					roles:           at.Scope,
+					domain:          at.BaseClaim.Audience,
+					issueTime:       at.IssuedAt,
+					expiryTime:      at.ExpiresAt,
+					authorizedRoles: []string{"role"},
+				},
+				clientID: at.ClientID,
+			}
+			return test{
+				name: "principalCacheMemoryUsage return correct principal memory usage for access token",
+				args: args{
+					p: pc,
+				},
+				want: 158,
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := principalCacheMemoryUsage(tt.args.p)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("authorizerd.principalCacheMemoryUsage() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_authorizer_VerifyRoleCert(t *testing.T) {
 	type fields struct {
 		pubkeyd               pubkey.Daemon
@@ -1683,6 +1755,67 @@ func Test_authorizer_GetPolicyCache(t *testing.T) {
 			}
 			if got := a.GetPolicyCache(tt.args.ctx); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("authority.GetPolicyCache() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_authorizer_GetPrincipalCacheLen(t *testing.T) {
+	type fields struct {
+		cache gache.Gache[Principal]
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   int
+	}{
+		{
+			name: "GetPrincipalCacheLen success",
+			fields: fields{
+				cache: gache.New[Principal](),
+			},
+			want: 1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := &authority{
+				cache: tt.fields.cache,
+			}
+			a.cache.Set("dummyTok:dummyAct:dummyRes", &principal{})
+			if got := a.GetPrincipalCacheLen(); got != tt.want {
+				t.Errorf("authority.GetPrincipalCacheLen() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_authorizer_GetPrincipalCacheSize(t *testing.T) {
+	type fields struct {
+		memoryUsage *atomic.Int64
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   int64
+	}{
+		{
+			name: "GetPrincipalCacheSize return memoryUsage field",
+			fields: fields{
+				memoryUsage: &atomic.Int64{},
+			},
+			want: 100,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			a := &authority{
+				memoryUsage: tt.fields.memoryUsage,
+			}
+			a.memoryUsage.Store(100)
+			if got := a.GetPrincipalCacheSize(); got != tt.want {
+				t.Errorf("authority.GetPrincipalCacheSize() = %v, want %v", got, tt.want)
 			}
 		})
 	}
