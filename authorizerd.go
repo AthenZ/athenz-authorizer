@@ -149,26 +149,7 @@ func New(opts ...Option) (Authorizerd, error) {
 
 	// enable ExpiredHook
 	prov.cache.EnableExpiredHook().
-		SetExpiredHook(func(ctx context.Context, key string) {
-			// ----- debug (delete it later).
-			glg.Info("!!!!!! before principalCacheLen: ", prov.GetPrincipalCacheLen())
-			glg.Info("!!!!!! before cacheMemoryUsageMapLen: ", prov.cacheMemoryUsageMap.Len())
-			glg.Info("!!!!!! before cacheMemoryUsageSize: ", prov.cacheMemoryUsage.Load())
-			glg.Info("!!!!!! before principalCacheSize: ", prov.GetPrincipalCacheSize())
-			glg.Info("!!!!!! expired key:", key)
-			// -----
-
-			cacheUsage, _ := prov.cacheMemoryUsageMap.Get(key)
-			prov.cacheMemoryUsage.Add(-cacheUsage)
-			prov.cacheMemoryUsageMap.Delete(key)
-
-			// ----- debug (delete it later).
-			glg.Info("!!!!!! after principalCacheLen: ", prov.GetPrincipalCacheLen())
-			glg.Info("!!!!!! after cacheMemoryUsageMapLen: ", prov.cacheMemoryUsageMap.Len())
-			glg.Info("!!!!!! after cacheMemoryUsageSize: ", prov.cacheMemoryUsage.Load())
-			glg.Info("!!!!!! after principalCacheSize: ", prov.GetPrincipalCacheSize())
-			// -----
-		})
+		SetExpiredHook(prov.cacheExpiredHook)
 
 	if !prov.disablePubkeyd {
 		if prov.pubkeyd, err = pubkey.New(
@@ -502,7 +483,7 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 
 	principalCacheSize := principalCacheMemoryUsage(p) + int64(len(key.String()))
 
-	a.cacheMemoryUsageMap.SetWithExpire(key.String(), principalCacheSize, a.cacheExp+time.Second)
+	a.cacheMemoryUsageMap.SetWithExpire(key.String(), principalCacheSize, 0)
 	a.cacheMemoryUsage.Add(principalCacheSize)
 
 	return p, nil
@@ -541,6 +522,30 @@ func (a *authority) GetPrincipalCacheLen() int {
 // GetPrincipalCacheSize returns memory usage of cached principals
 func (a *authority) GetPrincipalCacheSize() int64 {
 	return int64(a.cache.Size()) + a.cacheMemoryUsage.Load() + int64(a.cacheMemoryUsageMap.Size())
+}
+
+// cacheExpiredHook is a callback that is invoked when a cache entry expires.
+// It performs cleanup operations such as updating cacheMemoryUsage and
+// removing the expired entry from the cache memory usage map
+func (prov *authority) cacheExpiredHook(ctx context.Context, key string) {
+	// ----- debug (delete it later).
+	glg.Info("!!!!!! before principalCacheLen: ", prov.GetPrincipalCacheLen())
+	glg.Info("!!!!!! before cacheMemoryUsageMapLen: ", prov.cacheMemoryUsageMap.Len())
+	glg.Info("!!!!!! before cacheMemoryUsageSize: ", prov.cacheMemoryUsage.Load())
+	glg.Info("!!!!!! before principalCacheSize: ", prov.GetPrincipalCacheSize())
+	glg.Info("!!!!!! expired key:", key)
+	// -----
+
+	cacheUsage, _ := prov.cacheMemoryUsageMap.Get(key)
+	prov.cacheMemoryUsage.Add(-cacheUsage)
+	prov.cacheMemoryUsageMap.Delete(key)
+
+	// ----- debug (delete it later).
+	glg.Info("!!!!!! after principalCacheLen: ", prov.GetPrincipalCacheLen())
+	glg.Info("!!!!!! after cacheMemoryUsageMapLen: ", prov.cacheMemoryUsageMap.Len())
+	glg.Info("!!!!!! after cacheMemoryUsageSize: ", prov.cacheMemoryUsage.Load())
+	glg.Info("!!!!!! after principalCacheSize: ", prov.GetPrincipalCacheSize())
+	// -----
 }
 
 // Verify returns error of verification. Returns nil if ANY authorizer succeeds (OR logic).

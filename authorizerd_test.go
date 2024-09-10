@@ -1868,6 +1868,74 @@ func Test_authorizer_GetPrincipalCacheSize(t *testing.T) {
 	}
 }
 
+func Test_authorizer_cacheExpiredHook(t *testing.T) {
+	type fields struct {
+		ctx                 context.Context
+		key                 string
+		cache               gache.Gache[Principal]
+		cacheMemoryUsageMap gache.Gache[int64]
+		cacheMemoryUsage    *atomic.Int64
+	}
+	type test struct {
+		name   string
+		fields fields
+		want   int64
+	}
+	tests := []test{
+		func() test {
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
+
+			rt := &role.Token{
+				Principal:  "dummyPrincipal",
+				Roles:      []string{"dummyRole"},
+				Domain:     "dummyDomain",
+				TimeStamp:  time.Now(),
+				ExpiryTime: time.Now().Add(time.Hour),
+			}
+			pc := &principal{
+				name:       rt.Principal,
+				roles:      rt.Roles,
+				domain:     rt.Domain,
+				issueTime:  rt.TimeStamp.Unix(),
+				expiryTime: rt.ExpiryTime.Unix(),
+			}
+			key := "key"
+			c.Set(key, pc)
+			cacheUsage := principalCacheMemoryUsage(pc)
+			cacheMemoryUsage := &atomic.Int64{}
+			cacheMemoryUsage.Add(cacheUsage)
+			c2.Set(key, cacheUsage)
+			return test{
+				name: "cacheExpiredHook updating cacheMemoryUsage and removing cacheMemoryUsageMap",
+				fields: fields{
+					ctx:                 context.Background(),
+					key:                 key,
+					cache:               c,
+					cacheMemoryUsageMap: c2,
+					cacheMemoryUsage:    cacheMemoryUsage,
+				},
+				want: 0,
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			a := &authority{
+				cache:               tt.fields.cache,
+				cacheMemoryUsageMap: tt.fields.cacheMemoryUsageMap,
+				cacheMemoryUsage:    tt.fields.cacheMemoryUsage,
+			}
+			a.cacheExpiredHook(tt.fields.ctx, tt.fields.key)
+			got := a.cacheMemoryUsage.Load()
+			if got != tt.want {
+				t.Errorf("authority.cacheExpiredHook() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_authorizer_Authorize(t *testing.T) {
 	type fields struct {
 		authorizers []authorizer
