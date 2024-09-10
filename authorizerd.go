@@ -19,7 +19,6 @@ import (
 	"crypto/x509"
 	"fmt"
 	"net/http"
-	"reflect"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -77,7 +76,7 @@ type authority struct {
 	cache               gache.Gache[Principal]
 	cacheExp            time.Duration
 	cacheMemoryUsage    *atomic.Int64
-	cacheMemoryUsageMap map[string]int64
+	cacheMemoryUsageMap gache.Gache[int64]
 
 	// roleCertURIPrefix
 	roleCertURIPrefix string
@@ -135,7 +134,7 @@ func New(opts ...Option) (Authorizerd, error) {
 		prov = &authority{
 			cache:               gache.New[Principal](),
 			cacheMemoryUsage:    &atomic.Int64{},
-			cacheMemoryUsageMap: make(map[string]int64),
+			cacheMemoryUsageMap: gache.New[int64](),
 		}
 		err    error
 		pkPro  pubkey.Provider
@@ -153,18 +152,19 @@ func New(opts ...Option) (Authorizerd, error) {
 		SetExpiredHook(func(ctx context.Context, key string) {
 			// ----- debug (delete it later).
 			glg.Info("!!!!!! before principalCacheLen: ", prov.GetPrincipalCacheLen())
-			glg.Info("!!!!!! before cacheMemoryUsageMapSize: ", prov.cacheMemoryUsageMapSize())
+			glg.Info("!!!!!! before cacheMemoryUsageMapLen: ", prov.cacheMemoryUsageMap.Len())
 			glg.Info("!!!!!! before cacheMemoryUsageSize: ", prov.cacheMemoryUsage.Load())
 			glg.Info("!!!!!! before principalCacheSize: ", prov.GetPrincipalCacheSize())
 			glg.Info("!!!!!! expired key:", key)
 			// -----
 
-			prov.cacheMemoryUsage.Add(-prov.cacheMemoryUsageMap[key])
-			delete(prov.cacheMemoryUsageMap, key)
+			cacheUsage, _ := prov.cacheMemoryUsageMap.Get(key)
+			prov.cacheMemoryUsage.Add(-cacheUsage)
+			prov.cacheMemoryUsageMap.Delete(key)
 
 			// ----- debug (delete it later).
 			glg.Info("!!!!!! after principalCacheLen: ", prov.GetPrincipalCacheLen())
-			glg.Info("!!!!!! after cacheMemoryUsageMapSize: ", prov.cacheMemoryUsageMapSize())
+			glg.Info("!!!!!! after cacheMemoryUsageMapLen: ", prov.cacheMemoryUsageMap.Len())
 			glg.Info("!!!!!! after cacheMemoryUsageSize: ", prov.cacheMemoryUsage.Load())
 			glg.Info("!!!!!! after principalCacheSize: ", prov.GetPrincipalCacheSize())
 			// -----
@@ -350,6 +350,7 @@ func (a *authority) Start(ctx context.Context) <-chan error {
 			case <-ctx.Done():
 				g.Stop()
 				g.Clear()
+				a.cacheMemoryUsageMap.Clear()
 				ech <- ctx.Err()
 				return
 			case err := <-cech:
@@ -501,7 +502,7 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 
 	principalCacheSize := principalCacheMemoryUsage(p) + int64(len(key.String()))
 
-	a.cacheMemoryUsageMap[key.String()] = principalCacheSize
+	a.cacheMemoryUsageMap.SetWithExpire(key.String(), principalCacheSize, a.cacheExp+time.Second)
 	a.cacheMemoryUsage.Add(principalCacheSize)
 
 	return p, nil
@@ -532,24 +533,6 @@ func principalCacheMemoryUsage(p Principal) int64 {
 	return structSize + nameSize + domainSize + rolesSize + authorizedRolesSize + int64(timesSize)
 }
 
-// cacheMemoryUsageMapSize returns
-func (a *authority) cacheMemoryUsageMapSize() int64 {
-	val := reflect.ValueOf(a.cacheMemoryUsageMap)
-
-	headerSize := unsafe.Sizeof(val.MapIndex(val.MapKeys()[0]).Interface())
-
-	entrySize := unsafe.Sizeof(reflect.ValueOf(a.cacheMemoryUsageMap).MapIndex(reflect.ValueOf("")).Interface())
-
-	totalSize := uintptr(0)
-	for _, key := range val.MapKeys() {
-		totalSize += unsafe.Sizeof(key.Interface()) + entrySize
-	}
-
-	totalSize += headerSize
-
-	return int64(totalSize)
-}
-
 // GetPrincipalCacheLen returns entries number of cached principals
 func (a *authority) GetPrincipalCacheLen() int {
 	return a.cache.Len()
@@ -557,7 +540,7 @@ func (a *authority) GetPrincipalCacheLen() int {
 
 // GetPrincipalCacheSize returns memory usage of cached principals
 func (a *authority) GetPrincipalCacheSize() int64 {
-	return a.cacheMemoryUsage.Load() + a.cacheMemoryUsageMapSize()
+	return int64(a.cache.Size()) + a.cacheMemoryUsage.Load() + int64(a.cacheMemoryUsageMap.Size())
 }
 
 // Verify returns error of verification. Returns nil if ANY authorizer succeeds (OR logic).
