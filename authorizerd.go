@@ -481,7 +481,7 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 	})
 	a.cache.SetWithExpire(key.String(), p, a.cacheExp)
 
-	principalCacheSize := principalCacheMemoryUsage(p) + int64(len(key.String()))
+	principalCacheSize := principalCacheMemoryUsage(p) + (int64(len(key.String())) * 2)
 
 	a.cacheMemoryUsageMap.SetWithExpire(key.String(), principalCacheSize, 0)
 	a.cacheMemoryUsage.Add(principalCacheSize)
