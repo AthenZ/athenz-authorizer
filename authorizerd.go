@@ -528,24 +528,9 @@ func (a *authority) GetPrincipalCacheSize() int64 {
 // It performs cleanup operations such as updating cacheMemoryUsage and
 // removing the expired entry from the cache memory usage map
 func (prov *authority) cacheExpiredHook(ctx context.Context, key string) {
-	// ----- debug (delete it later).
-	glg.Info("!!!!!! before principalCacheLen: ", prov.GetPrincipalCacheLen())
-	glg.Info("!!!!!! before cacheMemoryUsageMapLen: ", prov.cacheMemoryUsageMap.Len())
-	glg.Info("!!!!!! before cacheMemoryUsageSize: ", prov.cacheMemoryUsage.Load())
-	glg.Info("!!!!!! before principalCacheSize: ", prov.GetPrincipalCacheSize())
-	glg.Info("!!!!!! expired key:", key)
-	// -----
-
 	cacheUsage, _ := prov.cacheMemoryUsageMap.Get(key)
 	prov.cacheMemoryUsage.Add(-cacheUsage)
 	prov.cacheMemoryUsageMap.Delete(key)
-
-	// ----- debug (delete it later).
-	glg.Info("!!!!!! after principalCacheLen: ", prov.GetPrincipalCacheLen())
-	glg.Info("!!!!!! after cacheMemoryUsageMapLen: ", prov.cacheMemoryUsageMap.Len())
-	glg.Info("!!!!!! after cacheMemoryUsageSize: ", prov.cacheMemoryUsage.Load())
-	glg.Info("!!!!!! after principalCacheSize: ", prov.GetPrincipalCacheSize())
-	// -----
 }
 
 // Verify returns error of verification. Returns nil if ANY authorizer succeeds (OR logic).
