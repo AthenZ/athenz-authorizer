@@ -1,6 +1,6 @@
 module github.com/AthenZ/athenz-authorizer/v5
 
-go 1.23.0
+go 1.23.1
 
 require (
 	github.com/AthenZ/athenz v1.11.43
@@ -8,7 +8,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/go-cmp v0.6.0
 	github.com/kpango/fastime v1.1.9
-	github.com/kpango/gache/v2 v2.0.10-0.20240911053229-c0df2ac39dae
+	github.com/kpango/gache/v2 v2.0.10
 	github.com/kpango/glg v1.6.15
 	github.com/lestrrat-go/jwx v1.2.26
 	github.com/pkg/errors v0.9.1
