@@ -20,8 +20,8 @@ github.com/klauspost/cpuid/v2 v2.2.5 h1:0E5MSMDEoAulmXNFquVs//DdoomxaoTY1kUhbc/q
 github.com/klauspost/cpuid/v2 v2.2.5/go.mod h1:Lcz8mBdAVJIBVzewtcLocK12l3Y+JytZYpaMropDUws=
 github.com/kpango/fastime v1.1.9 h1:xVQHcqyPt5M69DyFH7g1EPRns1YQNap9d5eLhl/Jy84=
 github.com/kpango/fastime v1.1.9/go.mod h1:vyD7FnUn08zxY4b/QFBZVG+9EWMYsNl+QF0uE46urD4=
-github.com/kpango/gache/v2 v2.0.10 h1:GgbG57FFYljnPOcWIgquP4+Fsp9kccTZ/5tsu+zHMyU=
-github.com/kpango/gache/v2 v2.0.10/go.mod h1:0YTbg//JH4Zylm/8LNHRaSbiXphcFStdVhiftgVpPds=
+github.com/kpango/gache/v2 v2.0.11 h1:uyIXOyx47YhE/0cvP2vf/T+ZCauUD8kSKcsl0IhsAjk=
+github.com/kpango/gache/v2 v2.0.11/go.mod h1:0YTbg//JH4Zylm/8LNHRaSbiXphcFStdVhiftgVpPds=
 github.com/kpango/glg v1.6.15 h1:nw0xSxpSyrDIWHeb3dvnE08PW+SCbK+aYFETT75IeLA=
 github.com/kpango/glg v1.6.15/go.mod h1:cmsc7Yeu8AS3wHLmN7bhwENXOpxfq+QoqxCIk2FneRk=
 github.com/lestrrat-go/backoff/v2 v2.0.8 h1:oNb5E5isby2kiro9AgdHLv5N5tint1AnDVVf2E2un5A=

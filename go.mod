@@ -8,7 +8,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/go-cmp v0.6.0
 	github.com/kpango/fastime v1.1.9
-	github.com/kpango/gache/v2 v2.0.10
+	github.com/kpango/gache/v2 v2.0.11
 	github.com/kpango/glg v1.6.15
 	github.com/lestrrat-go/jwx v1.2.26
 	github.com/pkg/errors v0.9.1

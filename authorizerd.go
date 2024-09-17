@@ -310,7 +310,7 @@ func (a *authority) Init(ctx context.Context) error {
 func (a *authority) Start(ctx context.Context) <-chan error {
 	var (
 		ech              = make(chan error, 200)
-		g                = a.cache.StartExpired(ctx, a.cacheExp/30)
+		g                = a.cache.StartExpired(ctx, a.cacheExp/2)
 		cech, pech, jech <-chan error
 	)
 
