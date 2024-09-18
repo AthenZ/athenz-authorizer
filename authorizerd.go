@@ -528,9 +528,7 @@ func (a *authority) GetPrincipalCacheSize() int64 {
 	return int64(a.cache.Size()) + a.cacheMemoryUsage.Load() + int64(a.cacheMemoryUsageMap.Size())
 }
 
-// cacheExpiredHook is a callback that is invoked when a cache entry expires.
-// It performs cleanup operations such as updating cacheMemoryUsage and
-// removing the expired entry from the cache memory usage map
+// cacheExpiredHook refreshes the value of cacheMemoryUsage when the cache expires.
 func (prov *authority) cacheExpiredHook(ctx context.Context, key string) {
 	cacheUsage, _ := prov.cacheMemoryUsageMap.Get(key)
 	prov.cacheMemoryUsage.Add(-cacheUsage)
