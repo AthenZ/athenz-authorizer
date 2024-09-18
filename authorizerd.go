@@ -481,6 +481,9 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 	})
 	a.cache.SetWithExpire(key.String(), p, a.cacheExp)
 
+	// Memory usage that cannot be calculated with gache.Size().
+	// The memory usage of the principal cache entity and
+	// the memory usage of the key (cacheMemoryUsage + cacheMemoryUsageMap).
 	principalCacheSize := principalCacheMemoryUsage(p) + (int64(len(key.String())) * 2)
 
 	a.cacheMemoryUsageMap.SetWithExpire(key.String(), principalCacheSize, 0)
@@ -508,6 +511,7 @@ func principalCacheMemoryUsage(p Principal) int64 {
 		authorizedRolesSize += int64(len(role)) + int64(unsafe.Sizeof(role))
 	}
 
+	// memory usage of issueTime and expiryTime
 	const int64Size = 8
 	timesSize := int64Size * 2
 
