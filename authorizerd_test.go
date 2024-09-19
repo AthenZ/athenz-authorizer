@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -32,7 +33,7 @@ import (
 	"github.com/AthenZ/athenz-authorizer/v5/role"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/kpango/fastime"
-	"github.com/kpango/gache"
+	"github.com/kpango/gache/v2"
 	"github.com/pkg/errors"
 )
 
@@ -195,7 +196,7 @@ func Test_authorizer_initAuthorizers(t *testing.T) {
 		authorizers           []authorizer
 		athenzURL             string
 		client                *http.Client
-		cache                 gache.Gache
+		cache                 gache.Gache[Principal]
 		cacheExp              time.Duration
 		roleCertURIPrefix     string
 		disablePubkeyd        bool
@@ -478,11 +479,12 @@ func Test_authorizer_Init(t *testing.T) {
 
 func Test_authorizer_Start(t *testing.T) {
 	type fields struct {
-		pubkeyd  pubkey.Daemon
-		policyd  policy.Daemon
-		jwkd     jwk.Daemon
-		cache    gache.Gache
-		cacheExp time.Duration
+		pubkeyd             pubkey.Daemon
+		policyd             policy.Daemon
+		jwkd                jwk.Daemon
+		cache               gache.Gache[Principal]
+		cacheExp            time.Duration
+		cacheMemoryUsageMap gache.Gache[int64]
 	}
 	type args struct {
 		ctx context.Context
@@ -507,11 +509,12 @@ func Test_authorizer_Start(t *testing.T) {
 			return test{
 				name: "test context done",
 				fields: fields{
-					pubkeyd:  pdm,
-					policyd:  pm,
-					jwkd:     jd,
-					cache:    gache.New(),
-					cacheExp: time.Minute,
+					pubkeyd:             pdm,
+					policyd:             pm,
+					jwkd:                jd,
+					cache:               gache.New[Principal](),
+					cacheExp:            time.Minute,
+					cacheMemoryUsageMap: gache.New[int64](),
 				},
 				args: args{
 					ctx: ctx,
@@ -539,11 +542,12 @@ func Test_authorizer_Start(t *testing.T) {
 			return test{
 				name: "test context pubkey updater returns error",
 				fields: fields{
-					pubkeyd:  pdm,
-					policyd:  pm,
-					jwkd:     jd,
-					cache:    gache.New(),
-					cacheExp: time.Minute,
+					pubkeyd:             pdm,
+					policyd:             pm,
+					jwkd:                jd,
+					cache:               gache.New[Principal](),
+					cacheExp:            time.Minute,
+					cacheMemoryUsageMap: gache.New[int64](),
 				},
 				args: args{
 					ctx: ctx,
@@ -571,11 +575,12 @@ func Test_authorizer_Start(t *testing.T) {
 			return test{
 				name: "test policyd returns error",
 				fields: fields{
-					pubkeyd:  pdm,
-					policyd:  pm,
-					jwkd:     jd,
-					cache:    gache.New(),
-					cacheExp: time.Minute,
+					pubkeyd:             pdm,
+					policyd:             pm,
+					jwkd:                jd,
+					cache:               gache.New[Principal](),
+					cacheExp:            time.Minute,
+					cacheMemoryUsageMap: gache.New[int64](),
 				},
 				args: args{
 					ctx: ctx,
@@ -612,11 +617,12 @@ func Test_authorizer_Start(t *testing.T) {
 			return test{
 				name: "test jwkd returns error",
 				fields: fields{
-					pubkeyd:  pdm,
-					policyd:  pm,
-					jwkd:     jd,
-					cache:    gache.New(),
-					cacheExp: time.Minute,
+					pubkeyd:             pdm,
+					policyd:             pm,
+					jwkd:                jd,
+					cache:               gache.New[Principal](),
+					cacheExp:            time.Minute,
+					cacheMemoryUsageMap: gache.New[int64](),
 				},
 				args: args{
 					ctx: ctx,
@@ -636,11 +642,12 @@ func Test_authorizer_Start(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			prov := &authority{
-				pubkeyd:  tt.fields.pubkeyd,
-				policyd:  tt.fields.policyd,
-				jwkd:     tt.fields.jwkd,
-				cache:    tt.fields.cache,
-				cacheExp: tt.fields.cacheExp,
+				pubkeyd:             tt.fields.pubkeyd,
+				policyd:             tt.fields.policyd,
+				jwkd:                tt.fields.jwkd,
+				cache:               tt.fields.cache,
+				cacheExp:            tt.fields.cacheExp,
+				cacheMemoryUsageMap: tt.fields.cacheMemoryUsageMap,
 			}
 			ch := prov.Start(tt.args.ctx)
 			gotErr := <-ch
@@ -660,10 +667,12 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 		res string
 	}
 	type fields struct {
-		policyd            policy.Daemon
-		cache              gache.Gache
-		cacheExp           time.Duration
-		roleTokenProcessor role.Processor
+		policyd             policy.Daemon
+		cache               gache.Gache[Principal]
+		cacheExp            time.Duration
+		cacheMemoryUsageMap gache.Gache[int64]
+		roleTokenProcessor  role.Processor
+		cacheMemoryUsage    *atomic.Int64
 	}
 	type test struct {
 		name       string
@@ -675,7 +684,8 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			rt := &role.Token{}
 			p := &principal{
 				name:       rt.Principal,
@@ -698,10 +708,12 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 					res: "dummyRes",
 				},
 				fields: fields{
-					policyd:            pdm,
-					roleTokenProcessor: rpm,
-					cache:              c,
-					cacheExp:           time.Minute,
+					policyd:             pdm,
+					roleTokenProcessor:  rpm,
+					cache:               c,
+					cacheExp:            time.Minute,
+					cacheMemoryUsageMap: c2,
+					cacheMemoryUsage:    &atomic.Int64{},
 				},
 				wantErr:    "",
 				wantResult: p,
@@ -715,7 +727,8 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			rt := &role.Token{}
 			p := &principal{
 				name:       rt.Principal,
@@ -739,17 +752,19 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 					res: "dummyRes",
 				},
 				fields: fields{
-					policyd:            pdm,
-					roleTokenProcessor: rpm,
-					cache:              c,
-					cacheExp:           time.Minute,
+					policyd:             pdm,
+					roleTokenProcessor:  rpm,
+					cache:               c,
+					cacheMemoryUsageMap: c2,
+					cacheExp:            time.Minute,
 				},
 				wantErr:    "",
 				wantResult: p,
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			c.Set("dummyTok:dummyAct:dummyRes", &principal{})
 			rpm := &RoleProcessorMock{
 				rt:      &role.Token{},
@@ -765,16 +780,18 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 					res: "dummyRes",
 				},
 				fields: fields{
-					policyd:            pdm,
-					roleTokenProcessor: rpm,
-					cache:              c,
-					cacheExp:           time.Minute,
+					policyd:             pdm,
+					roleTokenProcessor:  rpm,
+					cache:               c,
+					cacheMemoryUsageMap: c2,
+					cacheExp:            time.Minute,
 				},
 				wantErr: "empty action / resource: Access denied due to invalid/empty action/resource values",
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			c.Set("dummyTok:dummyAct:dummyRes", &principal{})
 			rpm := &RoleProcessorMock{
 				rt:      &role.Token{},
@@ -790,16 +807,18 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 					res: "",
 				},
 				fields: fields{
-					policyd:            pdm,
-					roleTokenProcessor: rpm,
-					cache:              c,
-					cacheExp:           time.Minute,
+					policyd:             pdm,
+					roleTokenProcessor:  rpm,
+					cache:               c,
+					cacheMemoryUsageMap: c2,
+					cacheExp:            time.Minute,
 				},
 				wantErr: "empty action / resource: Access denied due to invalid/empty action/resource values",
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			rpm := &RoleProcessorMock{
 				wantErr: errors.New("cannot parse roletoken"),
 			}
@@ -813,16 +832,18 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 					res: "dummyRes",
 				},
 				fields: fields{
-					policyd:            pdm,
-					roleTokenProcessor: rpm,
-					cache:              c,
-					cacheExp:           time.Minute,
+					policyd:             pdm,
+					roleTokenProcessor:  rpm,
+					cache:               c,
+					cacheMemoryUsageMap: c2,
+					cacheExp:            time.Minute,
 				},
 				wantErr: "error authorize role token: cannot parse roletoken",
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			rpm := &RoleProcessorMock{
 				rt: &role.Token{},
 			}
@@ -840,10 +861,11 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 					res: "dummyRes",
 				},
 				fields: fields{
-					policyd:            pdm,
-					roleTokenProcessor: rpm,
-					cache:              c,
-					cacheExp:           time.Minute,
+					policyd:             pdm,
+					roleTokenProcessor:  rpm,
+					cache:               c,
+					cacheMemoryUsageMap: c2,
+					cacheExp:            time.Minute,
 				},
 				wantErr: "token unauthorized: deny",
 			}
@@ -852,10 +874,12 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			prov := &authority{
-				policyd:       tt.fields.policyd,
-				roleProcessor: tt.fields.roleTokenProcessor,
-				cache:         tt.fields.cache,
-				cacheExp:      tt.fields.cacheExp,
+				policyd:             tt.fields.policyd,
+				roleProcessor:       tt.fields.roleTokenProcessor,
+				cache:               tt.fields.cache,
+				cacheExp:            tt.fields.cacheExp,
+				cacheMemoryUsageMap: tt.fields.cacheMemoryUsageMap,
+				cacheMemoryUsage:    tt.fields.cacheMemoryUsage,
 			}
 			err := prov.VerifyRoleToken(tt.args.ctx, tt.args.tok, tt.args.act, tt.args.res)
 			if err != nil {
@@ -908,8 +932,9 @@ func Test_authorizer_authorize(t *testing.T) {
 		roleProcessor         role.Processor
 		athenzURL             string
 		client                *http.Client
-		cache                 gache.Gache
+		cache                 gache.Gache[Principal]
 		cacheExp              time.Duration
+		cacheMemoryUsageMap   gache.Gache[int64]
 		roleCertURIPrefix     string
 		pubkeyRefreshPeriod   string
 		pubkeySysAuthDomain   string
@@ -921,6 +946,7 @@ func Test_authorizer_authorize(t *testing.T) {
 		disablePolicyd        bool
 		translator            Translator
 		resourcePrefix        string
+		cacheMemoryUsage      *atomic.Int64
 	}
 	type args struct {
 		ctx   context.Context
@@ -941,7 +967,8 @@ func Test_authorizer_authorize(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			var count int
 			pdm := &PolicydMock{
 				CheckPolicyRoleFunc: func(ctx context.Context, domain string, roles []string, action, resource string) ([]string, error) {
@@ -964,10 +991,12 @@ func Test_authorizer_authorize(t *testing.T) {
 			return test{
 				name: "test disablePolicyd true",
 				fields: fields{
-					cache:          c,
-					policyd:        pdm,
-					disablePolicyd: true,
-					roleProcessor:  rpm,
+					cache:               c,
+					cacheMemoryUsageMap: c2,
+					policyd:             pdm,
+					disablePolicyd:      true,
+					roleProcessor:       rpm,
+					cacheMemoryUsage:    &atomic.Int64{},
 				},
 				args: args{
 					m:   roleToken,
@@ -987,7 +1016,8 @@ func Test_authorizer_authorize(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			pdm := &PolicydMock{}
 			rt := &role.Token{}
 			p := &principal{
@@ -1004,10 +1034,12 @@ func Test_authorizer_authorize(t *testing.T) {
 			return test{
 				name: "test cache key when disablePolicyd is true",
 				fields: fields{
-					cache:          c,
-					policyd:        pdm,
-					disablePolicyd: true,
-					roleProcessor:  rpm,
+					cache:               c,
+					cacheMemoryUsageMap: c2,
+					policyd:             pdm,
+					disablePolicyd:      true,
+					roleProcessor:       rpm,
+					cacheMemoryUsage:    &atomic.Int64{},
 				},
 				args: args{
 					m:   roleToken,
@@ -1028,7 +1060,8 @@ func Test_authorizer_authorize(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			pdm := &PolicydMock{}
 			rt := &role.Token{}
 			p := &principal{
@@ -1045,10 +1078,12 @@ func Test_authorizer_authorize(t *testing.T) {
 			return test{
 				name: "test cache key when disablePolicyd is false",
 				fields: fields{
-					cache:          c,
-					policyd:        pdm,
-					disablePolicyd: false,
-					roleProcessor:  rpm,
+					cache:               c,
+					cacheMemoryUsageMap: c2,
+					policyd:             pdm,
+					disablePolicyd:      false,
+					roleProcessor:       rpm,
+					cacheMemoryUsage:    &atomic.Int64{},
 				},
 				args: args{
 					m:   roleToken,
@@ -1069,7 +1104,8 @@ func Test_authorizer_authorize(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			pdm := &PolicydMock{}
 			rt := &role.Token{
 				Domain: "domain",
@@ -1096,11 +1132,13 @@ func Test_authorizer_authorize(t *testing.T) {
 			return test{
 				name: "test cache key when disablePolicyd is false and translator is not nil",
 				fields: fields{
-					cache:          c,
-					policyd:        pdm,
-					disablePolicyd: false,
-					roleProcessor:  rpm,
-					translator:     mr,
+					cache:               c,
+					cacheMemoryUsageMap: c2,
+					policyd:             pdm,
+					disablePolicyd:      false,
+					roleProcessor:       rpm,
+					translator:          mr,
+					cacheMemoryUsage:    &atomic.Int64{},
 				},
 				args: args{
 					m:     roleToken,
@@ -1122,7 +1160,8 @@ func Test_authorizer_authorize(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			pdm := &PolicydMock{}
 			rt := &role.Token{
 				Domain: "domain",
@@ -1149,11 +1188,13 @@ func Test_authorizer_authorize(t *testing.T) {
 			return test{
 				name: "test cache key when disablePolicyd is false and translator is not nil, but didn't match",
 				fields: fields{
-					cache:          c,
-					policyd:        pdm,
-					disablePolicyd: false,
-					roleProcessor:  rpm,
-					translator:     mr,
+					cache:               c,
+					cacheMemoryUsageMap: c2,
+					policyd:             pdm,
+					disablePolicyd:      false,
+					roleProcessor:       rpm,
+					translator:          mr,
+					cacheMemoryUsage:    &atomic.Int64{},
 				},
 				args: args{
 					m:     roleToken,
@@ -1175,7 +1216,8 @@ func Test_authorizer_authorize(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			pdm := &PolicydMock{}
 			rt := &role.Token{
 				Domain: "domain",
@@ -1194,10 +1236,12 @@ func Test_authorizer_authorize(t *testing.T) {
 			return test{
 				name: "test cache key when disablePolicyd is false and translator is nil",
 				fields: fields{
-					cache:          c,
-					policyd:        pdm,
-					disablePolicyd: false,
-					roleProcessor:  rpm,
+					cache:               c,
+					cacheMemoryUsageMap: c2,
+					policyd:             pdm,
+					disablePolicyd:      false,
+					roleProcessor:       rpm,
+					cacheMemoryUsage:    &atomic.Int64{},
 				},
 				args: args{
 					m:     roleToken,
@@ -1219,7 +1263,8 @@ func Test_authorizer_authorize(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			pdm := &PolicydMock{
 				CheckPolicyRoleFunc: func(ctx context.Context, domain string, roles []string, action, resource string) ([]string, error) {
 					if resource != "/public/path" {
@@ -1245,11 +1290,13 @@ func Test_authorizer_authorize(t *testing.T) {
 			return test{
 				name: "test resourcePrefix",
 				fields: fields{
-					cache:          c,
-					policyd:        pdm,
-					disablePolicyd: false,
-					roleProcessor:  rpm,
-					resourcePrefix: "/public",
+					cache:               c,
+					cacheMemoryUsageMap: c2,
+					policyd:             pdm,
+					disablePolicyd:      false,
+					roleProcessor:       rpm,
+					resourcePrefix:      "/public",
+					cacheMemoryUsage:    &atomic.Int64{},
 				},
 				args: args{
 					m:     roleToken,
@@ -1278,6 +1325,7 @@ func Test_authorizer_authorize(t *testing.T) {
 				client:                tt.fields.client,
 				cache:                 tt.fields.cache,
 				cacheExp:              tt.fields.cacheExp,
+				cacheMemoryUsageMap:   tt.fields.cacheMemoryUsageMap,
 				roleCertURIPrefix:     tt.fields.roleCertURIPrefix,
 				pubkeyRefreshPeriod:   tt.fields.pubkeyRefreshPeriod,
 				pubkeySysAuthDomain:   tt.fields.pubkeySysAuthDomain,
@@ -1289,6 +1337,7 @@ func Test_authorizer_authorize(t *testing.T) {
 				disablePolicyd:        tt.fields.disablePolicyd,
 				translator:            tt.fields.translator,
 				resourcePrefix:        tt.fields.resourcePrefix,
+				cacheMemoryUsage:      tt.fields.cacheMemoryUsage,
 			}
 			p, err := a.authorize(tt.args.ctx, tt.args.m, tt.args.tok, tt.args.act, tt.args.res, tt.args.query, tt.args.cert)
 			if err != nil {
@@ -1311,6 +1360,78 @@ func Test_authorizer_authorize(t *testing.T) {
 	}
 }
 
+func Test_authorizer_principalCacheMemoryUsage(t *testing.T) {
+	type args struct {
+		p Principal
+	}
+	type test struct {
+		name string
+		args args
+		want int64
+	}
+	tests := []test{
+		func() test {
+			rt := &role.Token{
+				Principal:  "dummyPrincipal",
+				Roles:      []string{"dummyRole"},
+				Domain:     "dummyDomain",
+				TimeStamp:  time.Now(),
+				ExpiryTime: time.Now().Add(time.Hour),
+			}
+			pc := &principal{
+				name:       rt.Principal,
+				roles:      rt.Roles,
+				domain:     rt.Domain,
+				issueTime:  rt.TimeStamp.Unix(),
+				expiryTime: rt.ExpiryTime.Unix(),
+			}
+			return test{
+				name: "principalCacheMemoryUsage return correct principal memory usage for role token",
+				args: args{
+					p: pc,
+				},
+				want: 162,
+			}
+		}(),
+		func() test {
+			at := &access.OAuth2AccessTokenClaim{
+				Scope: []string{"role"},
+				BaseClaim: access.BaseClaim{
+					StandardClaims: jwt.StandardClaims{
+						Audience: "domain",
+					},
+				},
+			}
+			pc := &oAuthAccessToken{
+				principal: principal{
+					name:            at.BaseClaim.Subject,
+					roles:           at.Scope,
+					domain:          at.BaseClaim.Audience,
+					issueTime:       at.IssuedAt,
+					expiryTime:      at.ExpiresAt,
+					authorizedRoles: []string{"role"},
+				},
+				clientID: at.ClientID,
+			}
+			return test{
+				name: "principalCacheMemoryUsage return correct principal memory usage for access token",
+				args: args{
+					p: pc,
+				},
+				want: 158,
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := principalCacheMemoryUsage(tt.args.p)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("authorizerd.principalCacheMemoryUsage() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_authorizer_VerifyRoleCert(t *testing.T) {
 	type fields struct {
 		pubkeyd               pubkey.Daemon
@@ -1319,7 +1440,7 @@ func Test_authorizer_VerifyRoleCert(t *testing.T) {
 		roleProcessor         role.Processor
 		athenzURL             string
 		client                *http.Client
-		cache                 gache.Gache
+		cache                 gache.Gache[Principal]
 		cacheExp              time.Duration
 		roleCertURIPrefix     string
 		pubkeyRefreshPeriod   string
@@ -1605,7 +1726,7 @@ func Test_authorizer_GetPolicyCache(t *testing.T) {
 		roleProcessor         role.Processor
 		athenzURL             string
 		client                *http.Client
-		cache                 gache.Gache
+		cache                 gache.Gache[Principal]
 		cacheExp              time.Duration
 		roleCertURIPrefix     string
 		pubkeyRefreshPeriod   string
@@ -1624,7 +1745,7 @@ func Test_authorizer_GetPolicyCache(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   map[string]interface{}
+		want   map[string][]*policy.Assertion
 	}{
 		{
 			name: "GetPolicyCache success",
@@ -1644,7 +1765,7 @@ func Test_authorizer_GetPolicyCache(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 			},
-			want: make(map[string]interface{}),
+			want: make(map[string][]*policy.Assertion),
 		},
 	}
 	for _, tt := range tests {
@@ -1670,6 +1791,146 @@ func Test_authorizer_GetPolicyCache(t *testing.T) {
 			}
 			if got := a.GetPolicyCache(tt.args.ctx); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("authority.GetPolicyCache() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_authorizer_GetPrincipalCacheLen(t *testing.T) {
+	type fields struct {
+		cache gache.Gache[Principal]
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   int
+	}{
+		{
+			name: "GetPrincipalCacheLen success",
+			fields: fields{
+				cache: gache.New[Principal](),
+			},
+			want: 1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := &authority{
+				cache: tt.fields.cache,
+			}
+			a.cache.Set("dummyTok:dummyAct:dummyRes", &principal{})
+			if got := a.GetPrincipalCacheLen(); got != tt.want {
+				t.Errorf("authority.GetPrincipalCacheLen() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_authorizer_GetPrincipalCacheSize(t *testing.T) {
+	type fields struct {
+		cache               gache.Gache[Principal]
+		cacheMemoryUsageMap gache.Gache[int64]
+		cacheMemoryUsage    *atomic.Int64
+	}
+	type test struct {
+		name   string
+		fields fields
+		want   int64
+	}
+	tests := []test{
+		func() test {
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
+			return test{
+				name: "GetPrincipalCacheSize return memoryUsage field",
+				fields: fields{
+					cache:               c,
+					cacheMemoryUsageMap: c2,
+					cacheMemoryUsage:    &atomic.Int64{},
+				},
+				want: int64(c.Size()) + 100 + int64(c2.Size()),
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			a := &authority{
+				cache:               tt.fields.cache,
+				cacheMemoryUsageMap: tt.fields.cacheMemoryUsageMap,
+				cacheMemoryUsage:    tt.fields.cacheMemoryUsage,
+			}
+			a.cacheMemoryUsage.Store(100)
+			if got := a.GetPrincipalCacheSize(); got != tt.want {
+				t.Errorf("authority.GetPrincipalCacheSize() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_authorizer_cacheExpiredHook(t *testing.T) {
+	type fields struct {
+		ctx                 context.Context
+		key                 string
+		cache               gache.Gache[Principal]
+		cacheMemoryUsageMap gache.Gache[int64]
+		cacheMemoryUsage    *atomic.Int64
+	}
+	type test struct {
+		name   string
+		fields fields
+		want   int64
+	}
+	tests := []test{
+		func() test {
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
+
+			rt := &role.Token{
+				Principal:  "dummyPrincipal",
+				Roles:      []string{"dummyRole"},
+				Domain:     "dummyDomain",
+				TimeStamp:  time.Now(),
+				ExpiryTime: time.Now().Add(time.Hour),
+			}
+			pc := &principal{
+				name:       rt.Principal,
+				roles:      rt.Roles,
+				domain:     rt.Domain,
+				issueTime:  rt.TimeStamp.Unix(),
+				expiryTime: rt.ExpiryTime.Unix(),
+			}
+			key := "key"
+			c.Set(key, pc)
+			cacheUsage := principalCacheMemoryUsage(pc)
+			cacheMemoryUsage := &atomic.Int64{}
+			cacheMemoryUsage.Add(cacheUsage)
+			c2.Set(key, cacheUsage)
+			return test{
+				name: "cacheExpiredHook updating cacheMemoryUsage and removing cacheMemoryUsageMap",
+				fields: fields{
+					ctx:                 context.Background(),
+					key:                 key,
+					cache:               c,
+					cacheMemoryUsageMap: c2,
+					cacheMemoryUsage:    cacheMemoryUsage,
+				},
+				want: 0,
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			a := &authority{
+				cache:               tt.fields.cache,
+				cacheMemoryUsageMap: tt.fields.cacheMemoryUsageMap,
+				cacheMemoryUsage:    tt.fields.cacheMemoryUsage,
+			}
+			a.cacheExpiredHook(tt.fields.ctx, tt.fields.key)
+			got := a.cacheMemoryUsage.Load()
+			if got != tt.want {
+				t.Errorf("authority.cacheExpiredHook() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -1765,10 +2026,12 @@ func Test_authorizer_Authorize(t *testing.T) {
 
 func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 	type fields struct {
-		policyd         policy.Daemon
-		accessProcessor access.Processor
-		cache           gache.Gache
-		cacheExp        time.Duration
+		policyd             policy.Daemon
+		accessProcessor     access.Processor
+		cache               gache.Gache[Principal]
+		cacheMemoryUsageMap gache.Gache[int64]
+		cacheExp            time.Duration
+		cacheMemoryUsage    *atomic.Int64
 	}
 	type args struct {
 		ctx  context.Context
@@ -1788,7 +2051,8 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 	tests := []test{
 		func() test {
 			now := fastime.Now()
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			at := &access.OAuth2AccessTokenClaim{
 				Scope: []string{"role"},
 				BaseClaim: access.BaseClaim{
@@ -1829,10 +2093,12 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 					res: "dummyRes",
 				},
 				fields: fields{
-					policyd:         pdm,
-					accessProcessor: apm,
-					cache:           c,
-					cacheExp:        time.Minute,
+					policyd:             pdm,
+					accessProcessor:     apm,
+					cache:               c,
+					cacheExp:            time.Minute,
+					cacheMemoryUsageMap: c2,
+					cacheMemoryUsage:    &atomic.Int64{},
 				},
 				wantErr:    "",
 				wantResult: p,
@@ -1851,7 +2117,8 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 		}(),
 		func() test {
 			now := fastime.Now()
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			at := &access.OAuth2AccessTokenClaim{
 				Scope: []string{"role"},
 				BaseClaim: access.BaseClaim{
@@ -1901,10 +2168,12 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 					cert: cert,
 				},
 				fields: fields{
-					policyd:         pdm,
-					accessProcessor: apm,
-					cache:           c,
-					cacheExp:        time.Minute,
+					policyd:             pdm,
+					accessProcessor:     apm,
+					cache:               c,
+					cacheMemoryUsageMap: c2,
+					cacheExp:            time.Minute,
+					cacheMemoryUsage:    &atomic.Int64{},
 				},
 				wantErr:    "",
 				wantResult: p,
@@ -1923,7 +2192,8 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 		}(),
 		func() test {
 			now := fastime.Now()
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			at := &access.OAuth2AccessTokenClaim{}
 			p := &oAuthAccessToken{
 				principal: principal{
@@ -1957,10 +2227,11 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 					res: "dummyRes",
 				},
 				fields: fields{
-					policyd:         pdm,
-					accessProcessor: apm,
-					cache:           c,
-					cacheExp:        time.Minute,
+					policyd:             pdm,
+					accessProcessor:     apm,
+					cache:               c,
+					cacheExp:            time.Minute,
+					cacheMemoryUsageMap: c2,
 				},
 				wantErr:    "",
 				wantResult: p,
@@ -1987,7 +2258,8 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 					CommonName: "subject cn",
 				},
 			}
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			at := &access.OAuth2AccessTokenClaim{}
 			p := &oAuthAccessToken{
 				principal: principal{
@@ -2022,10 +2294,11 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 					cert: cert,
 				},
 				fields: fields{
-					policyd:         pdm,
-					accessProcessor: apm,
-					cache:           c,
-					cacheExp:        time.Minute,
+					policyd:             pdm,
+					accessProcessor:     apm,
+					cache:               c,
+					cacheExp:            time.Minute,
+					cacheMemoryUsageMap: c2,
 				},
 				wantErr:    "",
 				wantResult: p,
@@ -2043,7 +2316,8 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			c.Set("dummyTok:dummyAct:dummyRes", &principal{})
 			apm := &AccessProcessorMock{
 				atc:     &access.OAuth2AccessTokenClaim{},
@@ -2059,16 +2333,18 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 					res: "dummyRes",
 				},
 				fields: fields{
-					policyd:         pdm,
-					accessProcessor: apm,
-					cache:           c,
-					cacheExp:        time.Minute,
+					policyd:             pdm,
+					accessProcessor:     apm,
+					cache:               c,
+					cacheExp:            time.Minute,
+					cacheMemoryUsageMap: c2,
 				},
 				wantErr: "empty action / resource: Access denied due to invalid/empty action/resource values",
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			c.Set("dummyTok:dummyAct:dummyRes", &principal{})
 			apm := &AccessProcessorMock{
 				atc:     &access.OAuth2AccessTokenClaim{},
@@ -2084,16 +2360,18 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 					res: "",
 				},
 				fields: fields{
-					policyd:         pdm,
-					accessProcessor: apm,
-					cache:           c,
-					cacheExp:        time.Minute,
+					policyd:             pdm,
+					accessProcessor:     apm,
+					cache:               c,
+					cacheExp:            time.Minute,
+					cacheMemoryUsageMap: c2,
 				},
 				wantErr: "empty action / resource: Access denied due to invalid/empty action/resource values",
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			apm := &AccessProcessorMock{
 				wantErr: errors.New("cannot parse access token"),
 			}
@@ -2107,16 +2385,18 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 					res: "dummyRes",
 				},
 				fields: fields{
-					policyd:         pdm,
-					accessProcessor: apm,
-					cache:           c,
-					cacheExp:        time.Minute,
+					policyd:             pdm,
+					accessProcessor:     apm,
+					cache:               c,
+					cacheExp:            time.Minute,
+					cacheMemoryUsageMap: c2,
 				},
 				wantErr: "error authorize access token: cannot parse access token",
 			}
 		}(),
 		func() test {
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			apm := &AccessProcessorMock{
 				atc: &access.OAuth2AccessTokenClaim{},
 			}
@@ -2134,10 +2414,11 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 					res: "dummyRes",
 				},
 				fields: fields{
-					policyd:         pdm,
-					accessProcessor: apm,
-					cache:           c,
-					cacheExp:        time.Minute,
+					policyd:             pdm,
+					accessProcessor:     apm,
+					cache:               c,
+					cacheExp:            time.Minute,
+					cacheMemoryUsageMap: c2,
 				},
 				wantErr: "token unauthorized: deny",
 			}
@@ -2152,7 +2433,8 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 					CommonName: "subject cn",
 				},
 			}
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			at := &access.OAuth2AccessTokenClaim{
 				Scope: []string{"role"},
 				BaseClaim: access.BaseClaim{
@@ -2195,10 +2477,12 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 					// no cert
 				},
 				fields: fields{
-					policyd:         pdm,
-					accessProcessor: apm,
-					cache:           c,
-					cacheExp:        time.Minute,
+					policyd:             pdm,
+					accessProcessor:     apm,
+					cache:               c,
+					cacheExp:            time.Minute,
+					cacheMemoryUsageMap: c2,
+					cacheMemoryUsage:    &atomic.Int64{},
 				},
 				wantErr:    "",
 				wantResult: p,
@@ -2224,7 +2508,8 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 					CommonName: "subject cn",
 				},
 			}
-			c := gache.New()
+			c := gache.New[Principal]()
+			c2 := gache.New[int64]()
 			at := &access.OAuth2AccessTokenClaim{}
 			p := &oAuthAccessToken{
 				principal: principal{
@@ -2252,10 +2537,11 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 					// no cert
 				},
 				fields: fields{
-					policyd:         pdm,
-					accessProcessor: apm,
-					cache:           c,
-					cacheExp:        time.Minute,
+					policyd:             pdm,
+					accessProcessor:     apm,
+					cache:               c,
+					cacheExp:            time.Minute,
+					cacheMemoryUsageMap: c2,
 				},
 				wantErr: "error authorize access token: error mTLS client certificate is nil",
 			}
@@ -2264,10 +2550,12 @@ func Test_authorizer_AuthorizeAccessToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &authority{
-				policyd:         tt.fields.policyd,
-				accessProcessor: tt.fields.accessProcessor,
-				cache:           tt.fields.cache,
-				cacheExp:        tt.fields.cacheExp,
+				policyd:             tt.fields.policyd,
+				accessProcessor:     tt.fields.accessProcessor,
+				cache:               tt.fields.cache,
+				cacheExp:            tt.fields.cacheExp,
+				cacheMemoryUsageMap: tt.fields.cacheMemoryUsageMap,
+				cacheMemoryUsage:    tt.fields.cacheMemoryUsage,
 			}
 			err := a.VerifyAccessToken(tt.args.ctx, tt.args.tok, tt.args.act, tt.args.res, tt.args.cert)
 			if err != nil {

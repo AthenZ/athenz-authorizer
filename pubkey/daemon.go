@@ -25,7 +25,7 @@ import (
 	"time"
 
 	authcore "github.com/AthenZ/athenz/libs/go/zmssvctoken"
-	"github.com/kpango/gache"
+	"github.com/kpango/gache/v2"
 	"github.com/kpango/glg"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
@@ -46,7 +46,7 @@ type pubkeyd struct {
 
 	client *http.Client
 
-	eTagCache       gache.Gache
+	eTagCache       gache.Gache[confCache]
 	eTagExpiry      time.Duration
 	eTagPurgePeriod time.Duration
 
@@ -86,7 +86,7 @@ func New(opts ...Option) (Daemon, error) {
 			ZMSPubKeys: new(sync.Map),
 			ZTSPubKeys: new(sync.Map),
 		},
-		eTagCache: gache.New(),
+		eTagCache: gache.New[confCache](),
 	}
 
 	for _, opt := range append(defaultOptions, opts...) {
@@ -241,7 +241,7 @@ func (p *pubkeyd) fetchPubKeyEntries(ctx context.Context, env AthenzEnv) (*SysAu
 	// ETag header
 	t, ok := p.eTagCache.Get(string(env))
 	if ok {
-		eTag := t.(*confCache).eTag
+		eTag := t.eTag
 		glg.Debugf("ETag %v found in the cache", eTag)
 		req.Header.Set("If-None-Match", eTag)
 	}
@@ -254,7 +254,7 @@ func (p *pubkeyd) fetchPubKeyEntries(ctx context.Context, env AthenzEnv) (*SysAu
 
 	// if server return NotModified, return policy from cache
 	if r.StatusCode == http.StatusNotModified {
-		cache := t.(*confCache)
+		cache := t
 		glg.Debugf("Server return not modified, ETag: %s", cache.eTag)
 		return cache.sac, false, nil
 	}
@@ -282,7 +282,7 @@ func (p *pubkeyd) fetchPubKeyEntries(ctx context.Context, env AthenzEnv) (*SysAu
 	eTag := r.Header.Get("ETag")
 	if eTag != "" {
 		glg.Debugf("Setting ETag %v", eTag)
-		p.eTagCache.SetWithExpire(string(env), &confCache{eTag, sac}, p.eTagExpiry)
+		p.eTagCache.SetWithExpire(string(env), confCache{eTag, sac}, p.eTagExpiry)
 	}
 
 	glg.Info("Fetch public key entries success")

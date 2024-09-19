@@ -20,10 +20,12 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync/atomic"
 	"time"
+	"unsafe"
 
 	"github.com/golang-jwt/jwt/v4/request"
-	"github.com/kpango/gache"
+	"github.com/kpango/gache/v2"
 	"github.com/kpango/glg"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
@@ -50,7 +52,9 @@ type Authorizerd interface {
 	AuthorizeRoleToken(ctx context.Context, tok, act, res string) (Principal, error)
 	VerifyRoleCert(ctx context.Context, peerCerts []*x509.Certificate, act, res string) error
 	AuthorizeRoleCert(ctx context.Context, peerCerts []*x509.Certificate, act, res string) (Principal, error)
-	GetPolicyCache(ctx context.Context) map[string]interface{}
+	GetPolicyCache(ctx context.Context) map[string][]*policy.Assertion
+	GetPrincipalCacheLen() int
+	GetPrincipalCacheSize() int64
 }
 
 type authorizer func(r *http.Request, act, res string) (Principal, error)
@@ -69,8 +73,10 @@ type authority struct {
 	client    *http.Client
 
 	// successful result cache
-	cache    gache.Gache
-	cacheExp time.Duration
+	cache               gache.Gache[Principal]
+	cacheExp            time.Duration
+	cacheMemoryUsage    *atomic.Int64
+	cacheMemoryUsageMap gache.Gache[int64]
 
 	// roleCertURIPrefix
 	roleCertURIPrefix string
@@ -126,7 +132,9 @@ const (
 func New(opts ...Option) (Authorizerd, error) {
 	var (
 		prov = &authority{
-			cache: gache.New(),
+			cache:               gache.New[Principal](),
+			cacheMemoryUsage:    &atomic.Int64{},
+			cacheMemoryUsageMap: gache.New[int64](),
 		}
 		err    error
 		pkPro  pubkey.Provider
@@ -138,6 +146,10 @@ func New(opts ...Option) (Authorizerd, error) {
 			return nil, errors.Wrap(err, "error creating authorizerd")
 		}
 	}
+
+	// enable ExpiredHook
+	prov.cache.EnableExpiredHook().
+		SetExpiredHook(prov.cacheExpiredHook)
 
 	if !prov.disablePubkeyd {
 		if prov.pubkeyd, err = pubkey.New(
@@ -319,6 +331,7 @@ func (a *authority) Start(ctx context.Context) <-chan error {
 			case <-ctx.Done():
 				g.Stop()
 				g.Clear()
+				a.cacheMemoryUsageMap.Clear()
 				ech <- ctx.Err()
 				return
 			case err := <-cech:
@@ -467,7 +480,59 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 		return fmt.Sprintf("set token result. masked tok: %s, masked key: %s, act: %s, res: %s", maskToken(m, tok), maskCacheKey(key.String(), tok), act, res)
 	})
 	a.cache.SetWithExpire(key.String(), p, a.cacheExp)
+
+	// Memory usage that cannot be calculated with gache.Size().
+	// The memory usage of the principal cache entity and
+	// the memory usage of the key (cacheMemoryUsage + cacheMemoryUsageMap).
+	principalCacheSize := principalCacheMemoryUsage(p) + (int64(len(key.String())) * 2)
+
+	a.cacheMemoryUsageMap.SetWithExpire(key.String(), principalCacheSize, 0)
+	a.cacheMemoryUsage.Add(principalCacheSize)
+
 	return p, nil
+}
+
+// principalCacheMemoryUsage returns memory usage of principal
+func principalCacheMemoryUsage(p Principal) int64 {
+	structSize := int64(unsafe.Sizeof(p))
+	name := p.Name()
+	domain := p.Domain()
+
+	nameSize := int64(len(name)) + int64(unsafe.Sizeof(name))
+	domainSize := int64(len(domain)) + int64(unsafe.Sizeof(domain))
+
+	rolesSize := int64(unsafe.Sizeof(p.Roles()))
+	for _, role := range p.Roles() {
+		rolesSize += int64(len(role)) + int64(unsafe.Sizeof(role))
+	}
+
+	authorizedRolesSize := int64(unsafe.Sizeof(p.AuthorizedRoles()))
+	for _, role := range p.AuthorizedRoles() {
+		authorizedRolesSize += int64(len(role)) + int64(unsafe.Sizeof(role))
+	}
+
+	// memory usage of issueTime and expiryTime
+	const int64Size = 8
+	timesSize := int64Size * 2
+
+	return structSize + nameSize + domainSize + rolesSize + authorizedRolesSize + int64(timesSize)
+}
+
+// GetPrincipalCacheLen returns entries number of cached principals
+func (a *authority) GetPrincipalCacheLen() int {
+	return a.cache.Len()
+}
+
+// GetPrincipalCacheSize returns memory usage of cached principals
+func (a *authority) GetPrincipalCacheSize() int64 {
+	return int64(a.cache.Size()) + a.cacheMemoryUsage.Load() + int64(a.cacheMemoryUsageMap.Size())
+}
+
+// cacheExpiredHook refreshes the value of cacheMemoryUsage when the cache expires.
+func (prov *authority) cacheExpiredHook(ctx context.Context, key string) {
+	cacheUsage, _ := prov.cacheMemoryUsageMap.Get(key)
+	prov.cacheMemoryUsage.Add(-cacheUsage)
+	prov.cacheMemoryUsageMap.Delete(key)
 }
 
 // Verify returns error of verification. Returns nil if ANY authorizer succeeds (OR logic).
@@ -552,10 +617,10 @@ func (a *authority) AuthorizeRoleCert(ctx context.Context, peerCerts []*x509.Cer
 }
 
 // GetPolicyCache returns the cached policy data
-func (a *authority) GetPolicyCache(ctx context.Context) map[string]interface{} {
+func (a *authority) GetPolicyCache(ctx context.Context) map[string][]*policy.Assertion {
 	if !a.disablePolicyd {
 		return a.policyd.GetPolicyCache(ctx)
 	} else {
-		return make(map[string]interface{})
+		return make(map[string][]*policy.Assertion)
 	}
 }

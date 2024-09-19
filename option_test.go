@@ -22,7 +22,7 @@ import (
 	"time"
 
 	urlutil "github.com/AthenZ/athenz-authorizer/v5/internal/url"
-	"github.com/kpango/gache"
+	"github.com/kpango/gache/v2"
 )
 
 func TestWithEnablePubkeyd(t *testing.T) {
@@ -619,7 +619,7 @@ func TestWithCacheExp(t *testing.T) {
 			},
 			checkFunc: func(opt Option) error {
 				authz := &authority{
-					cache: gache.New(),
+					cache: gache.New[Principal](),
 				}
 				if err := opt(authz); err != nil {
 					return err
