@@ -73,10 +73,9 @@ type authority struct {
 	client    *http.Client
 
 	// successful result cache
-	cache               gache.Gache[Principal]
-	cacheExp            time.Duration
-	cacheMemoryUsage    *atomic.Int64
-	cacheMemoryUsageMap gache.Gache[int64]
+	cache            gache.Gache[Principal]
+	cacheExp         time.Duration
+	cacheMemoryUsage *atomic.Int64
 
 	// roleCertURIPrefix
 	roleCertURIPrefix string
@@ -132,9 +131,8 @@ const (
 func New(opts ...Option) (Authorizerd, error) {
 	var (
 		prov = &authority{
-			cache:               gache.New[Principal](),
-			cacheMemoryUsage:    &atomic.Int64{},
-			cacheMemoryUsageMap: gache.New[int64](),
+			cache:            gache.New[Principal](),
+			cacheMemoryUsage: &atomic.Int64{},
 		}
 		err    error
 		pkPro  pubkey.Provider
@@ -149,7 +147,7 @@ func New(opts ...Option) (Authorizerd, error) {
 
 	// enable ExpiredHook
 	prov.cache.EnableExpiredHook().
-		SetExpiredHook(prov.cacheExpiredHook)
+		SetExpiredHookWithValue(prov.cacheExpiredHook)
 
 	if !prov.disablePubkeyd {
 		if prov.pubkeyd, err = pubkey.New(
@@ -331,7 +329,6 @@ func (a *authority) Start(ctx context.Context) <-chan error {
 			case <-ctx.Done():
 				g.Stop()
 				g.Clear()
-				a.cacheMemoryUsageMap.Clear()
 				ech <- ctx.Err()
 				return
 			case err := <-cech:
@@ -484,16 +481,15 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 	// Memory usage that cannot be calculated with gache.Size().
 	// The memory usage of the principal cache entity and
 	// the memory usage of the key (cacheMemoryUsage + cacheMemoryUsageMap).
-	principalCacheSize := principalCacheMemoryUsage(p) + (int64(len(key.String())) * 2)
+	principalCacheSize := principalCacheMemoryUsage(key.String(), p)
 
-	a.cacheMemoryUsageMap.SetWithExpire(key.String(), principalCacheSize, 0)
 	a.cacheMemoryUsage.Add(principalCacheSize)
 
 	return p, nil
 }
 
 // principalCacheMemoryUsage returns memory usage of principal
-func principalCacheMemoryUsage(p Principal) int64 {
+func principalCacheMemoryUsage(key string, p Principal) int64 {
 	structSize := int64(unsafe.Sizeof(p))
 	name := p.Name()
 	domain := p.Domain()
@@ -515,7 +511,7 @@ func principalCacheMemoryUsage(p Principal) int64 {
 	const int64Size = 8
 	timesSize := int64Size * 2
 
-	return structSize + nameSize + domainSize + rolesSize + authorizedRolesSize + int64(timesSize)
+	return structSize + nameSize + domainSize + rolesSize + authorizedRolesSize + int64(timesSize) + int64(len(key))
 }
 
 // GetPrincipalCacheLen returns entries number of cached principals
@@ -525,14 +521,13 @@ func (a *authority) GetPrincipalCacheLen() int {
 
 // GetPrincipalCacheSize returns memory usage of cached principals
 func (a *authority) GetPrincipalCacheSize() int64 {
-	return int64(a.cache.Size()) + a.cacheMemoryUsage.Load() + int64(a.cacheMemoryUsageMap.Size())
+	return int64(a.cache.Size()) + a.cacheMemoryUsage.Load()
 }
 
 // cacheExpiredHook refreshes the value of cacheMemoryUsage when the cache expires.
-func (prov *authority) cacheExpiredHook(ctx context.Context, key string) {
-	cacheUsage, _ := prov.cacheMemoryUsageMap.Get(key)
+func (prov *authority) cacheExpiredHook(ctx context.Context, key string, value Principal) {
+	cacheUsage := principalCacheMemoryUsage(key, value)
 	prov.cacheMemoryUsage.Add(-cacheUsage)
-	prov.cacheMemoryUsageMap.Delete(key)
 }
 
 // Verify returns error of verification. Returns nil if ANY authorizer succeeds (OR logic).
