@@ -147,7 +147,7 @@ func New(opts ...Option) (Authorizerd, error) {
 
 	// enable ExpiredHook
 	prov.cache.EnableExpiredHook().
-		SetExpiredHookWithValue(prov.cacheExpiredHook)
+		SetExpiredHook(prov.cacheExpiredHook)
 
 	if !prov.disablePubkeyd {
 		if prov.pubkeyd, err = pubkey.New(
@@ -480,7 +480,7 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 
 	// Memory usage that cannot be calculated with gache.Size().
 	// The memory usage of the principal cache entity and
-	// the memory usage of the key (cacheMemoryUsage + cacheMemoryUsageMap).
+	// the memory usage of the key cacheMemoryUsage.
 	principalCacheSize := principalCacheMemoryUsage(key.String(), p)
 
 	a.cacheMemoryUsage.Add(principalCacheSize)
