@@ -478,9 +478,7 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 	})
 	a.cache.SetWithExpire(key.String(), p, a.cacheExp)
 
-	// Memory usage that cannot be calculated with gache.Size().
-	// The memory usage of the principal cache entity and
-	// the memory usage of the key cacheMemoryUsage.
+	// Calculate memory usage of key and principal that cannot be calculated with gache.Size()
 	principalCacheSize := principalCacheMemoryUsage(key.String(), p)
 
 	a.cacheMemoryUsage.Add(principalCacheSize)
