@@ -184,7 +184,7 @@ func (p *policyd) Update(ctx context.Context) error {
 
 	rp.StartExpired(ctx, p.purgePeriod).
 		EnableExpiredHook().
-		SetExpiredHook(func(ctx context.Context, key string) {
+		SetExpiredHook(func(ctx context.Context, key string, v []*Assertion) {
 			// key = <domain>:role.<role>
 			fetchAndCachePolicy(ctx, *(p.rolePolicies), p.fetchers[strings.Split(key, ":role.")[0]])
 		})
