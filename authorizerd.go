@@ -116,6 +116,9 @@ type authority struct {
 	// Athenz action/resource mapping parameters
 	translator     Translator
 	resourcePrefix string
+
+	// log parameters
+	enableAuthorizedPrincipalLog bool
 }
 
 type mode uint8
@@ -403,6 +406,10 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 		glg.DebugFunc(func() string {
 			return fmt.Sprintf("use cached result. masked tok: %s, masked key: %s", maskToken(m, tok), maskCacheKey(key.String(), tok))
 		})
+
+		if a.enableAuthorizedPrincipalLog {
+			glg.Infof("use cached ok, principal: %s, action: %s, resource: %s", cached.(Principal).Name(), act, res)
+		}
 		return cached.(Principal), nil
 	}
 
@@ -482,6 +489,10 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 	principalCacheSize := principalCacheMemoryUsage(key.String(), p)
 
 	a.cacheMemoryUsage.Add(principalCacheSize)
+
+	if a.enableAuthorizedPrincipalLog {
+		glg.Infof("ok, principal: %s, action: %s, resource: %s", p.Name(), act, res)
+	}
 
 	return p, nil
 }
