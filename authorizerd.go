@@ -408,7 +408,7 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 		})
 
 		if a.enableAuthorizedPrincipalLog {
-			glg.Infof("use cached ok, principal: %s, action: %s, resource: %s", cached.(Principal).Name(), act, res)
+			glg.Infof("access authorized by cache, principal: %s, action: %s, resource: %s", cached.(Principal).Name(), act, res)
 		}
 		return cached.(Principal), nil
 	}
@@ -491,7 +491,7 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 	a.cacheMemoryUsage.Add(principalCacheSize)
 
 	if a.enableAuthorizedPrincipalLog {
-		glg.Infof("ok, principal: %s, action: %s, resource: %s", p.Name(), act, res)
+		glg.Infof("access authorized, principal: %s, action: %s, resource: %s", p.Name(), act, res)
 	}
 
 	return p, nil
