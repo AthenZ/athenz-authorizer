@@ -28,8 +28,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lestrrat-go/jwx/jwa"
-	"github.com/lestrrat-go/jwx/jwk"
+	"github.com/lestrrat-go/jwx/v3/jwa"
+	"github.com/lestrrat-go/jwx/v3/jwk"
 	"github.com/pkg/errors"
 )
 
@@ -228,10 +228,14 @@ func Test_jwkd_Start(t *testing.T) {
 						return errors.New("cannot update keys")
 					}
 
-					k1k, _ := k1.(jwk.Set).Get(0)
-					k2k, _ := k2.(jwk.Set).Get(0)
-					if k1k.KeyID() == k2k.KeyID() {
-						return errors.Errorf("key do not update after it starts, k1.KeyID: %v equals k2.KeyID: %v", k1k.KeyID(), k2k.KeyID())
+					k1k, _ := k1.(jwk.Set).Key(0)
+					k2k, _ := k2.(jwk.Set).Key(0)
+
+					k1kID, _ := k1k.KeyID()
+					k2kID, _ := k2k.KeyID()
+
+					if k1kID == k2kID {
+						return errors.Errorf("key do not update after it starts, k1.KeyID: %v equals k2.KeyID: %v", k1kID, k2kID)
 					}
 
 					return nil
@@ -364,9 +368,9 @@ func Test_jwkd_Update(t *testing.T) {
 						return errors.New("keys is empty")
 					}
 
-					vk, _ := val.(jwk.Set).Get(0)
+					vk, _ := val.(jwk.Set).Key(0)
 					got := vk.KeyType()
-					if got != jwa.RSA {
+					if got != jwa.RSA() {
 						return errors.Errorf("Unexpected key type: %v", got)
 					}
 					return nil
@@ -406,9 +410,9 @@ func Test_jwkd_Update(t *testing.T) {
 						return errors.New("athenz keys is empty")
 					}
 
-					vk, _ := val.(jwk.Set).Get(0)
+					vk, _ := val.(jwk.Set).Key(0)
 					got := vk.KeyType()
-					if got != jwa.RSA {
+					if got != jwa.RSA() {
 						return errors.Errorf("Unexpected key type from athenz: %v", got)
 					}
 
@@ -418,9 +422,9 @@ func Test_jwkd_Update(t *testing.T) {
 						return errors.New("urls keys is empty")
 					}
 
-					vk, _ = val.(jwk.Set).Get(0)
+					vk, _ = val.(jwk.Set).Key(0)
 					got = vk.KeyType()
-					if got != jwa.RSA {
+					if got != jwa.RSA() {
 						return errors.Errorf("Unexpected key type from urls: %v", got)
 					}
 					return nil
@@ -508,9 +512,9 @@ func Test_jwkd_Update(t *testing.T) {
 					if !ok {
 						return errors.New("athenz keys is empty")
 					}
-					vk, _ := val.(jwk.Set).Get(0)
+					vk, _ := val.(jwk.Set).Key(0)
 					got := vk.KeyType()
-					if got != jwa.RSA {
+					if got != jwa.RSA() {
 						return errors.Errorf("Unexpected key type from athenz: %v", got)
 					}
 					// key from urls, expect fail
@@ -573,9 +577,9 @@ func Test_jwkd_Update(t *testing.T) {
 					if !ok {
 						return errors.New("athenz keys is empty")
 					}
-					v1k, _ := val1.(jwk.Set).Get(0)
+					v1k, _ := val1.(jwk.Set).Key(0)
 					got1 := v1k.KeyType()
-					if got1 != jwa.RSA {
+					if got1 != jwa.RSA() {
 						return errors.Errorf("Unexpected key type from urls: %v", got1)
 					}
 					// key from urls (/success2), expect success
@@ -583,9 +587,9 @@ func Test_jwkd_Update(t *testing.T) {
 					if !ok {
 						return errors.New("athenz keys is empty")
 					}
-					v2k, _ := val2.(jwk.Set).Get(0)
+					v2k, _ := val2.(jwk.Set).Key(0)
 					got2 := v2k.KeyType()
-					if got2 != jwa.RSA {
+					if got2 != jwa.RSA() {
 						return errors.Errorf("Unexpected key type from urls: %v", got2)
 					}
 					return nil
@@ -675,9 +679,9 @@ func Test_jwkd_Update(t *testing.T) {
 						return errors.New("athenz keys is empty")
 					}
 
-					vk, _ := val.(jwk.Set).Get(0)
+					vk, _ := val.(jwk.Set).Key(0)
 					got := vk.KeyType()
-					if got != jwa.RSA {
+					if got != jwa.RSA() {
 						return errors.Errorf("Unexpected key type from athenz: %v", got)
 					}
 
@@ -687,9 +691,9 @@ func Test_jwkd_Update(t *testing.T) {
 						return errors.New("urls keys is empty")
 					}
 
-					vk, _ = val.(jwk.Set).Get(0)
+					vk, _ = val.(jwk.Set).Key(0)
 					got = vk.KeyType()
-					if got != jwa.RSA {
+					if got != jwa.RSA() {
 						return errors.Errorf("Unexpected key type from urls: %v", got)
 					}
 
@@ -699,9 +703,9 @@ func Test_jwkd_Update(t *testing.T) {
 						return errors.New("urls keys is empty")
 					}
 
-					vk, _ = val.(jwk.Set).Get(0)
+					vk, _ = val.(jwk.Set).Key(0)
 					got = vk.KeyType()
-					if got != jwa.RSA {
+					if got != jwa.RSA() {
 						return errors.Errorf("Unexpected key type from urls: %v", got)
 					}
 
@@ -803,7 +807,7 @@ func Test_jwkd_getKey(t *testing.T) {
 		return k
 	}
 	newKey := func(k interface{}, keyID string) jwk.Key {
-		jwkKey, _ := jwk.New(k)
+		jwkKey, _ := jwk.Import(k)
 		err := jwkKey.Set(jwk.KeyIDKey, keyID)
 		if err != nil {
 			t.Errorf("jwkd.getKey() setup error = %v", err)
@@ -814,7 +818,7 @@ func Test_jwkd_getKey(t *testing.T) {
 		func() test {
 			rsaKey := &genKey().PublicKey
 			set := jwk.NewSet()
-			set.Add(newKey(rsaKey, "dummyID"))
+			set.AddKey(newKey(rsaKey, "dummyID"))
 			key := sync.Map{}
 			key.Store("dummy.com", set)
 
@@ -834,7 +838,7 @@ func Test_jwkd_getKey(t *testing.T) {
 		func() test {
 			rsaKey := &genKey().PublicKey
 			set := jwk.NewSet()
-			set.Add(newKey(rsaKey, "dummyID"))
+			set.AddKey(newKey(rsaKey, "dummyID"))
 			key := sync.Map{}
 			key.Store("dummy.com", set)
 
@@ -854,7 +858,7 @@ func Test_jwkd_getKey(t *testing.T) {
 		func() test {
 			rsaKey := &genKey().PublicKey
 			set := jwk.NewSet()
-			set.Add(newKey(rsaKey, ""))
+			set.AddKey(newKey(rsaKey, ""))
 			key := sync.Map{}
 			key.Store("dummy.com", set)
 
@@ -874,7 +878,7 @@ func Test_jwkd_getKey(t *testing.T) {
 		func() test {
 			rsaKey := &genKey().PublicKey
 			set := jwk.NewSet()
-			set.Add(newKey(rsaKey, ""))
+			set.AddKey(newKey(rsaKey, ""))
 			key := sync.Map{}
 			key.Store("dummy.com", set)
 
@@ -896,9 +900,9 @@ func Test_jwkd_getKey(t *testing.T) {
 			rsaKey2 := &genKey().PublicKey
 			rsaKey3 := &genKey().PublicKey
 			set := jwk.NewSet()
-			set.Add(newKey(rsaKey1, "dummyID1"))
-			set.Add(newKey(rsaKey2, "dummyID2"))
-			set.Add(newKey(rsaKey3, "dummyID3"))
+			set.AddKey(newKey(rsaKey1, "dummyID1"))
+			set.AddKey(newKey(rsaKey2, "dummyID2"))
+			set.AddKey(newKey(rsaKey3, "dummyID3"))
 			key := sync.Map{}
 			key.Store("dummy.com", set)
 
@@ -921,7 +925,7 @@ func Test_jwkd_getKey(t *testing.T) {
 				t.Errorf("ecdsa.GenerateKey: %s", err.Error())
 			}
 			set := jwk.NewSet()
-			set.Add(newKey(ecKey, "ecKeyID"))
+			set.AddKey(newKey(ecKey, "ecKeyID"))
 			key := sync.Map{}
 			key.Store("dummy.com", set)
 
@@ -945,7 +949,7 @@ func Test_jwkd_getKey(t *testing.T) {
 				t.Errorf("ecdsa.GenerateKey: %s", err.Error())
 			}
 			set := jwk.NewSet()
-			set.Add(newKey(ecPubKey, "ecPubKeyID"))
+			set.AddKey(newKey(ecPubKey, "ecPubKeyID"))
 			key := sync.Map{}
 			key.Store("dummy.com", set)
 
@@ -964,7 +968,7 @@ func Test_jwkd_getKey(t *testing.T) {
 		func() test {
 			rsaPrivateKey := genKey()
 			set := jwk.NewSet()
-			set.Add(newKey(rsaPrivateKey, "rsaPrivateKeyID"))
+			set.AddKey(newKey(rsaPrivateKey, "rsaPrivateKeyID"))
 			key := sync.Map{}
 			key.Store("dummy.com", set)
 
@@ -990,7 +994,7 @@ func Test_jwkd_getKey(t *testing.T) {
 		func() test {
 			rsaKey := &genKey().PublicKey
 			set := jwk.NewSet()
-			set.Add(newKey(rsaKey, "dummyID"))
+			set.AddKey(newKey(rsaKey, "dummyID"))
 			key := sync.Map{}
 			key.Store("dummy2.com", set)
 
@@ -1010,10 +1014,10 @@ func Test_jwkd_getKey(t *testing.T) {
 		func() test {
 			rsaKey1 := &genKey().PublicKey
 			set1 := jwk.NewSet()
-			set1.Add(newKey(rsaKey1, "dummyID"))
+			set1.AddKey(newKey(rsaKey1, "dummyID"))
 			rsaKey2 := genKey()
 			set2 := jwk.NewSet()
-			set2.Add(newKey(rsaKey2, "dummyID"))
+			set2.AddKey(newKey(rsaKey2, "dummyID"))
 			key := sync.Map{}
 			key.Store("dummy1.com", set1)
 			key.Store("dummy2.com", set2)
@@ -1034,7 +1038,7 @@ func Test_jwkd_getKey(t *testing.T) {
 		func() test {
 			rsaKey := &genKey().PublicKey
 			set := jwk.NewSet()
-			set.Add(newKey(rsaKey, "dummyID"))
+			set.AddKey(newKey(rsaKey, "dummyID"))
 			key := sync.Map{}
 			key.Store("dummy2.com", set)
 

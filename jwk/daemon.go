@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/kpango/glg"
-	"github.com/lestrrat-go/jwx/jwk"
+	"github.com/lestrrat-go/jwx/v3/jwk"
 	"github.com/pkg/errors"
 )
 
@@ -171,7 +171,7 @@ func (j *jwkd) getKey(keyID string, jwkSetURL string) interface{} {
 	key, found := keys.(jwk.Set).LookupKeyID(keyID)
 	if found {
 		var raw interface{}
-		if err := key.Raw(&raw); err != nil {
+		if err := jwk.Export(key, &raw); err != nil {
 			glg.Warnf("jwkd.getKey: %s", err.Error())
 		} else {
 			return raw
