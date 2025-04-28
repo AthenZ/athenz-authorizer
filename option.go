@@ -361,3 +361,15 @@ func WithResourcePrefix(p string) Option {
 		return nil
 	}
 }
+
+/*
+	log parameters
+*/
+
+// WithEnableAuthorizedPrincipalLog returns a enable log principal with timestamp functional option
+func WithEnableAuthorizedPrincipalLog() Option {
+	return func(authz *authority) error {
+		authz.enableAuthorizedPrincipalLog = true
+		return nil
+	}
+}
