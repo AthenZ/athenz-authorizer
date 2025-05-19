@@ -366,10 +366,10 @@ func WithResourcePrefix(p string) Option {
 	log parameters
 */
 
-// WithEnableAuthorizedPrincipalLog returns a enable log principal with timestamp functional option
-func WithEnableAuthorizedPrincipalLog() Option {
+// WithOutputAuthorizedPrincipalLog returns a enable log principal functional option
+func WithOutputAuthorizedPrincipalLog() Option {
 	return func(authz *authority) error {
-		authz.enableAuthorizedPrincipalLog = true
+		authz.outputAuthorizedPrincipalLog = true
 		return nil
 	}
 }

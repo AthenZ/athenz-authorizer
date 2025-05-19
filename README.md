@@ -147,7 +147,7 @@ The authorizer uses functional options pattern to initialize the instance. All t
 | RoleAuthHeader          | The HTTP header to extract role token                                         | Athenz\-Role\-Auth                            | No       | "Athenz\-Role\-Auth"                         |
 | Enable/DisableRoleCert  | Use role certificate verification or not                                      | true                                          | No       |                                              |
 | RoleCertURIPrefix       | Extract role from role certificate                                            | athenz://role/                                | No       | "athenz://role/"                             |
-| EnableAuthorizedPrincipalLog | Output the name of the authenticated Principal to the log | false | No | |
+| OutputAuthorizedPrincipalLog | Output the name of the authenticated Principal to the log | false | No | |
 
 ### AccessTokenParam
 
