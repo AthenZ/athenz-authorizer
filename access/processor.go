@@ -21,7 +21,7 @@ import (
 
 	"github.com/AthenZ/athenz-authorizer/v5/jwk"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/lestrrat-go/jwx/jws"
+	"github.com/lestrrat-go/jwx/v3/jws"
 	"github.com/pkg/errors"
 )
 
