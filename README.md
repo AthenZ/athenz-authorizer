@@ -8,15 +8,16 @@
 
 <!-- TOC insertAnchor:false -->
 
-- [What is Athenz authorizer](#what-is-athenz-authorizer)
-- [Usage](#usage)
-- [How it works](#how-it-works)
-  - [Athenz public key daemon](#athenz-public-key-daemon)
-  - [Athenz policy daemon](#athenz-policy-daemon)
-- [Configuration](#configuration)
-  - [AccessTokenParam](#accesstokenparam)
-- [About releases](#about-releases)
-- [Authors](#authors)
+- [Athenz authorizer](#athenz-authorizer)
+  - [What is Athenz authorizer](#what-is-athenz-authorizer)
+  - [Usage](#usage)
+  - [How it works](#how-it-works)
+    - [Athenz public key daemon](#athenz-public-key-daemon)
+    - [Athenz policy daemon](#athenz-policy-daemon)
+  - [Configuration](#configuration)
+    - [AccessTokenParam](#accesstokenparam)
+  - [About releases](#about-releases)
+  - [Authors](#authors)
 
 <!-- /TOC -->
 
@@ -146,6 +147,7 @@ The authorizer uses functional options pattern to initialize the instance. All t
 | RoleAuthHeader          | The HTTP header to extract role token                                         | Athenz\-Role\-Auth                            | No       | "Athenz\-Role\-Auth"                         |
 | Enable/DisableRoleCert  | Use role certificate verification or not                                      | true                                          | No       |                                              |
 | RoleCertURIPrefix       | Extract role from role certificate                                            | athenz://role/                                | No       | "athenz://role/"                             |
+| OutputAuthorizedPrincipalLog | Output the name of the authenticated Principal to the log | false | No | |
 
 ### AccessTokenParam
 

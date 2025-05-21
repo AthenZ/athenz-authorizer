@@ -1243,3 +1243,32 @@ func TestWithResourcePrefix(t *testing.T) {
 		})
 	}
 }
+
+func TestWithOutputAuthorizedPrincipalLog(t *testing.T) {
+	tests := []struct {
+		name      string
+		checkFunc func(Option) error
+	}{
+		{
+			name: "set success",
+			checkFunc: func(opt Option) error {
+				authz := &authority{}
+				if err := opt(authz); err != nil {
+					return err
+				}
+				if authz.outputAuthorizedPrincipalLog != true {
+					return fmt.Errorf("invalid param was set")
+				}
+				return nil
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := WithOutputAuthorizedPrincipalLog()
+			if err := tt.checkFunc(got); err != nil {
+				t.Errorf("WithOutputAuthorizedPrincipalLog() error = %v", err)
+			}
+		})
+	}
+}

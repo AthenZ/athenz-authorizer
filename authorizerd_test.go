@@ -15,6 +15,7 @@
 package authorizerd
 
 import (
+	"bytes"
 	"context"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -22,6 +23,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -34,6 +36,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/kpango/fastime"
 	"github.com/kpango/gache/v2"
+	"github.com/kpango/glg"
 	"github.com/pkg/errors"
 )
 
@@ -906,26 +909,27 @@ func Test_authorizer_AuthorizeRoleToken(t *testing.T) {
 
 func Test_authorizer_authorize(t *testing.T) {
 	type fields struct {
-		pubkeyd               pubkey.Daemon
-		policyd               policy.Daemon
-		jwkd                  jwk.Daemon
-		roleProcessor         role.Processor
-		athenzURL             string
-		client                *http.Client
-		cache                 gache.Gache[Principal]
-		cacheExp              time.Duration
-		roleCertURIPrefix     string
-		pubkeyRefreshPeriod   string
-		pubkeySysAuthDomain   string
-		pubkeyETagExpiry      string
-		pubkeyETagPurgePeriod string
-		policyExpiryMargin    string
-		athenzDomains         []string
-		policyRefreshPeriod   string
-		disablePolicyd        bool
-		translator            Translator
-		resourcePrefix        string
-		cacheMemoryUsage      *atomic.Int64
+		pubkeyd                      pubkey.Daemon
+		policyd                      policy.Daemon
+		jwkd                         jwk.Daemon
+		roleProcessor                role.Processor
+		athenzURL                    string
+		client                       *http.Client
+		cache                        gache.Gache[Principal]
+		cacheExp                     time.Duration
+		roleCertURIPrefix            string
+		pubkeyRefreshPeriod          string
+		pubkeySysAuthDomain          string
+		pubkeyETagExpiry             string
+		pubkeyETagPurgePeriod        string
+		policyExpiryMargin           string
+		athenzDomains                []string
+		policyRefreshPeriod          string
+		disablePolicyd               bool
+		translator                   Translator
+		resourcePrefix               string
+		cacheMemoryUsage             *atomic.Int64
+		outputAuthorizedPrincipalLog bool
 	}
 	type args struct {
 		ctx   context.Context
@@ -942,7 +946,7 @@ func Test_authorizer_authorize(t *testing.T) {
 		args       args
 		wantErr    bool
 		wantResult Principal
-		checkFunc  func(prov *authority) error
+		checkFunc  func(prov *authority, buf *bytes.Buffer) error
 	}
 	tests := []test{
 		func() test {
@@ -984,7 +988,7 @@ func Test_authorizer_authorize(t *testing.T) {
 				},
 				wantErr:    false,
 				wantResult: p,
-				checkFunc: func(prov *authority) error {
+				checkFunc: func(prov *authority, buf *bytes.Buffer) error {
 					if count != 0 {
 						return errors.New("CheckPolicy must not be called")
 					}
@@ -1025,7 +1029,7 @@ func Test_authorizer_authorize(t *testing.T) {
 				},
 				wantErr:    false,
 				wantResult: p,
-				checkFunc: func(prov *authority) error {
+				checkFunc: func(prov *authority, buf *bytes.Buffer) error {
 					_, ok := prov.cache.Get("dummyTok")
 					if !ok {
 						return errors.New("cannot get dummyTok from cache")
@@ -1067,7 +1071,7 @@ func Test_authorizer_authorize(t *testing.T) {
 				},
 				wantErr:    false,
 				wantResult: p,
-				checkFunc: func(prov *authority) error {
+				checkFunc: func(prov *authority, buf *bytes.Buffer) error {
 					_, ok := prov.cache.Get("dummyTok:dummyAct:dummyRes")
 					if !ok {
 						return errors.New("cannot get dummyTok:dummyAct:dummyRes from cache")
@@ -1121,7 +1125,7 @@ func Test_authorizer_authorize(t *testing.T) {
 				},
 				wantErr:    false,
 				wantResult: p,
-				checkFunc: func(prov *authority) error {
+				checkFunc: func(prov *authority, buf *bytes.Buffer) error {
 					_, ok := prov.cache.Get("dummyTok:get:/path:param=value")
 					if !ok {
 						return errors.New("cannot get dummyTok:get:/path:param=value from cache")
@@ -1175,7 +1179,7 @@ func Test_authorizer_authorize(t *testing.T) {
 				},
 				wantErr:    false,
 				wantResult: p,
-				checkFunc: func(prov *authority) error {
+				checkFunc: func(prov *authority, buf *bytes.Buffer) error {
 					_, ok := prov.cache.Get("dummyTok:get:/path:param=value")
 					if !ok {
 						return errors.New("cannot get dummyTok:get:/path:param=value from cache")
@@ -1220,7 +1224,7 @@ func Test_authorizer_authorize(t *testing.T) {
 				},
 				wantErr:    false,
 				wantResult: p,
-				checkFunc: func(prov *authority) error {
+				checkFunc: func(prov *authority, buf *bytes.Buffer) error {
 					_, ok := prov.cache.Get("dummyTok:get:/path")
 					if !ok {
 						return errors.New("cannot get dummyTok:get:/path from cache")
@@ -1273,7 +1277,99 @@ func Test_authorizer_authorize(t *testing.T) {
 				},
 				wantErr:    false,
 				wantResult: p,
-				checkFunc: func(prov *authority) error {
+				checkFunc: func(prov *authority, buf *bytes.Buffer) error {
+					return nil
+				},
+			}
+		}(),
+		func() test {
+			buf := new(bytes.Buffer)
+			glg.Get().SetMode(glg.WRITER).SetWriter(buf)
+
+			c := gache.New[Principal]()
+			pdm := &PolicydMock{}
+			rt := &role.Token{}
+			p := &principal{
+				name:       rt.Principal,
+				roles:      rt.Roles,
+				domain:     rt.Domain,
+				issueTime:  rt.TimeStamp.Unix(),
+				expiryTime: rt.ExpiryTime.Unix(),
+			}
+			rpm := &RoleProcessorMock{
+				rt:      rt,
+				wantErr: nil,
+			}
+			return test{
+				name: "test outputAuthorizedPrincipalLog true",
+				fields: fields{
+					cache:                        c,
+					policyd:                      pdm,
+					roleProcessor:                rpm,
+					disablePolicyd:               false,
+					cacheMemoryUsage:             &atomic.Int64{},
+					outputAuthorizedPrincipalLog: true,
+				},
+				args: args{
+					m:   roleToken,
+					ctx: context.Background(),
+					tok: "dummyTok",
+					act: "dummyAct",
+					res: "dummyRes",
+				},
+				wantErr:    false,
+				wantResult: p,
+				checkFunc: func(prov *authority, buf *bytes.Buffer) error {
+					logged := buf.String()
+
+					if !strings.Contains(logged, "access authorized, principal:") {
+						return errors.New(logged)
+					}
+					return nil
+				},
+			}
+		}(),
+		func() test {
+			c := gache.New[Principal]()
+			pdm := &PolicydMock{}
+			rt := &role.Token{}
+			p := &principal{
+				name:       rt.Principal,
+				roles:      rt.Roles,
+				domain:     rt.Domain,
+				issueTime:  rt.TimeStamp.Unix(),
+				expiryTime: rt.ExpiryTime.Unix(),
+			}
+			c.Set("dummyTok:dummyAct:dummyRes", p)
+			rpm := &RoleProcessorMock{
+				rt:      rt,
+				wantErr: nil,
+			}
+			return test{
+				name: "test outputAuthorizedPrincipalLog true when cache hit",
+				fields: fields{
+					cache:                        c,
+					policyd:                      pdm,
+					roleProcessor:                rpm,
+					disablePolicyd:               false,
+					cacheMemoryUsage:             &atomic.Int64{},
+					outputAuthorizedPrincipalLog: true,
+				},
+				args: args{
+					m:   roleToken,
+					ctx: context.Background(),
+					tok: "dummyTok",
+					act: "dummyAct",
+					res: "dummyRes",
+				},
+				wantErr:    false,
+				wantResult: p,
+				checkFunc: func(prov *authority, buf *bytes.Buffer) error {
+					logged := buf.String()
+
+					if !strings.Contains(logged, "access authorized by cache, principal:") {
+						return errors.New("expected log message not found")
+					}
 					return nil
 				},
 			}
@@ -1281,27 +1377,31 @@ func Test_authorizer_authorize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			buf := new(bytes.Buffer)
+			glg.Get().SetMode(glg.WRITER).SetWriter(buf)
+
 			a := &authority{
-				pubkeyd:               tt.fields.pubkeyd,
-				policyd:               tt.fields.policyd,
-				jwkd:                  tt.fields.jwkd,
-				roleProcessor:         tt.fields.roleProcessor,
-				athenzURL:             tt.fields.athenzURL,
-				client:                tt.fields.client,
-				cache:                 tt.fields.cache,
-				cacheExp:              tt.fields.cacheExp,
-				roleCertURIPrefix:     tt.fields.roleCertURIPrefix,
-				pubkeyRefreshPeriod:   tt.fields.pubkeyRefreshPeriod,
-				pubkeySysAuthDomain:   tt.fields.pubkeySysAuthDomain,
-				pubkeyETagExpiry:      tt.fields.pubkeyETagExpiry,
-				pubkeyETagPurgePeriod: tt.fields.pubkeyETagPurgePeriod,
-				policyExpiryMargin:    tt.fields.policyExpiryMargin,
-				athenzDomains:         tt.fields.athenzDomains,
-				policyRefreshPeriod:   tt.fields.policyRefreshPeriod,
-				disablePolicyd:        tt.fields.disablePolicyd,
-				translator:            tt.fields.translator,
-				resourcePrefix:        tt.fields.resourcePrefix,
-				cacheMemoryUsage:      tt.fields.cacheMemoryUsage,
+				pubkeyd:                      tt.fields.pubkeyd,
+				policyd:                      tt.fields.policyd,
+				jwkd:                         tt.fields.jwkd,
+				roleProcessor:                tt.fields.roleProcessor,
+				athenzURL:                    tt.fields.athenzURL,
+				client:                       tt.fields.client,
+				cache:                        tt.fields.cache,
+				cacheExp:                     tt.fields.cacheExp,
+				roleCertURIPrefix:            tt.fields.roleCertURIPrefix,
+				pubkeyRefreshPeriod:          tt.fields.pubkeyRefreshPeriod,
+				pubkeySysAuthDomain:          tt.fields.pubkeySysAuthDomain,
+				pubkeyETagExpiry:             tt.fields.pubkeyETagExpiry,
+				pubkeyETagPurgePeriod:        tt.fields.pubkeyETagPurgePeriod,
+				policyExpiryMargin:           tt.fields.policyExpiryMargin,
+				athenzDomains:                tt.fields.athenzDomains,
+				policyRefreshPeriod:          tt.fields.policyRefreshPeriod,
+				disablePolicyd:               tt.fields.disablePolicyd,
+				translator:                   tt.fields.translator,
+				resourcePrefix:               tt.fields.resourcePrefix,
+				cacheMemoryUsage:             tt.fields.cacheMemoryUsage,
+				outputAuthorizedPrincipalLog: tt.fields.outputAuthorizedPrincipalLog,
 			}
 			p, err := a.authorize(tt.args.ctx, tt.args.m, tt.args.tok, tt.args.act, tt.args.res, tt.args.query, tt.args.cert)
 			if err != nil {
@@ -1316,10 +1416,12 @@ func Test_authorizer_authorize(t *testing.T) {
 				}
 			}
 			if tt.checkFunc != nil {
-				if err := tt.checkFunc(a); err != nil {
+				if err := tt.checkFunc(a, buf); err != nil {
 					t.Errorf("authority.authorize() error: %v", err)
 				}
 			}
+
+			buf.Reset()
 		})
 	}
 }

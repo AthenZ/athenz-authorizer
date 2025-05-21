@@ -361,3 +361,15 @@ func WithResourcePrefix(p string) Option {
 		return nil
 	}
 }
+
+/*
+	log parameters
+*/
+
+// WithOutputAuthorizedPrincipalLog returns a enable log principal functional option
+func WithOutputAuthorizedPrincipalLog() Option {
+	return func(authz *authority) error {
+		authz.outputAuthorizedPrincipalLog = true
+		return nil
+	}
+}
