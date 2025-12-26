@@ -15,11 +15,14 @@
 package access
 
 import (
+	"context"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
+	"time"
 
 	"github.com/AthenZ/athenz-authorizer/v5/jwk"
+	"github.com/AthenZ/athenz-authorizer/v5/tokencache"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/lestrrat-go/jwx/v3/jws"
 	"github.com/pkg/errors"
@@ -46,6 +49,7 @@ type Processor interface {
 
 type atp struct {
 	jwkp                                  jwk.Provider
+	cache                                 tokencache.Cache
 	enableMTLSCertificateBoundAccessToken bool
 	// If you go back to the issue time, set that time. Subtract if necessary (for example, token issuance time).
 	clientCertificateGoBackSeconds int64
@@ -67,6 +71,12 @@ func New(opts ...Option) (Processor, error) {
 }
 
 func (a *atp) ParseAndValidateOAuth2AccessToken(cred string, cert *x509.Certificate) (*OAuth2AccessTokenClaim, error) {
+	// Check cache first if enabled
+	if a.cache != nil {
+		if cached, found := a.cache.Get(context.Background(), cred); found {
+			return validatedTokenToAccessTokenClaim(cached), nil
+		}
+	}
 
 	tok, err := jwt.ParseWithClaims(cred, &OAuth2AccessTokenClaim{}, a.keyFunc)
 	if err != nil {
@@ -91,6 +101,12 @@ func (a *atp) ParseAndValidateOAuth2AccessToken(cred string, cert *x509.Certific
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	// Store in cache if enabled
+	if a.cache != nil {
+		validated := accessTokenClaimToValidatedToken(claims, cred)
+		_ = a.cache.Set(context.Background(), cred, validated)
 	}
 
 	return claims, nil
@@ -230,4 +246,59 @@ func getAsStringFromHeader(header *map[string]interface{}, key string) (string, 
 	}
 
 	return value, nil
+}
+
+// accessTokenClaimToValidatedToken converts OAuth2AccessTokenClaim to tokencache.ValidatedToken
+func accessTokenClaimToValidatedToken(claim *OAuth2AccessTokenClaim, rawToken string) *tokencache.ValidatedToken {
+	// Extract domain from subject (format: domain.service or user.username)
+	domain := ""
+	if claim.Subject != "" {
+		if idx := len(claim.Subject); idx > 0 {
+			// Simple domain extraction - can be enhanced based on actual format
+			domain = claim.Subject
+		}
+	}
+
+	// Convert single audience string to slice
+	var audience []string
+	if claim.Audience != "" {
+		audience = []string{claim.Audience}
+	}
+
+	return &tokencache.ValidatedToken{
+		Type:            tokencache.AccessTokenType,
+		RawToken:        rawToken,
+		Domain:          domain,
+		Principal:       claim.Subject,
+		IssueTime:       time.Unix(claim.IssuedAt, 0),
+		ExpiryTime:      time.Unix(claim.ExpiresAt, 0),
+		ClientID:        claim.ClientID,
+		Subject:         claim.Subject,
+		Audience:        audience,
+		Scope:           claim.Scope,
+		AuthorizedParty: claim.Issuer,
+	}
+}
+
+// validatedTokenToAccessTokenClaim converts tokencache.ValidatedToken to OAuth2AccessTokenClaim
+func validatedTokenToAccessTokenClaim(vt *tokencache.ValidatedToken) *OAuth2AccessTokenClaim {
+	// Convert audience slice to single string (take first element)
+	var audience string
+	if len(vt.Audience) > 0 {
+		audience = vt.Audience[0]
+	}
+
+	return &OAuth2AccessTokenClaim{
+		ClientID: vt.ClientID,
+		Scope:    vt.Scope,
+		BaseClaim: BaseClaim{
+			StandardClaims: jwt.StandardClaims{
+				Audience:  audience,
+				ExpiresAt: vt.ExpiryTime.Unix(),
+				IssuedAt:  vt.IssueTime.Unix(),
+				Issuer:    vt.AuthorizedParty,
+				Subject:   vt.Subject,
+			},
+		},
+	}
 }

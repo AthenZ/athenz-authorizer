@@ -16,6 +16,7 @@ package role
 
 import (
 	"github.com/AthenZ/athenz-authorizer/v5/pubkey"
+	"github.com/AthenZ/athenz-authorizer/v5/tokencache"
 )
 
 var (
@@ -29,6 +30,14 @@ type Option func(*rtp) error
 func WithPubkeyProvider(pkp pubkey.Provider) Option {
 	return func(r *rtp) error {
 		r.pkp = pkp
+		return nil
+	}
+}
+
+// WithTokenCache represents set token cache functional option
+func WithTokenCache(cache tokencache.Cache) Option {
+	return func(r *rtp) error {
+		r.cache = cache
 		return nil
 	}
 }

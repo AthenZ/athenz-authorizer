@@ -35,6 +35,7 @@ import (
 	"github.com/AthenZ/athenz-authorizer/v5/policy"
 	"github.com/AthenZ/athenz-authorizer/v5/pubkey"
 	"github.com/AthenZ/athenz-authorizer/v5/role"
+	"github.com/AthenZ/athenz-authorizer/v5/tokencache"
 )
 
 // Authorizerd represents a daemon for user to verify the role token
@@ -76,6 +77,10 @@ type authority struct {
 	cache            gache.Gache[Principal]
 	cacheExp         time.Duration
 	cacheMemoryUsage *atomic.Int64
+
+	// token validation cache
+	tokenCache       tokencache.Cache
+	enableTokenCache bool
 
 	// roleCertURIPrefix
 	roleCertURIPrefix string
@@ -152,6 +157,15 @@ func New(opts ...Option) (Authorizerd, error) {
 	prov.cache.EnableExpiredHook().
 		SetExpiredHook(prov.cacheExpiredHook)
 
+	// Create token cache if enabled
+	if prov.enableTokenCache && prov.tokenCache == nil {
+		if prov.tokenCache, err = tokencache.New(); err != nil {
+			return nil, errors.Wrap(err, "error creating token cache")
+		}
+		// Start background cleanup every minute
+		prov.tokenCache.StartExpiredHook(context.Background(), 1*time.Minute)
+	}
+
 	if !prov.disablePubkeyd {
 		if prov.pubkeyd, err = pubkey.New(
 			pubkey.WithAthenzURL(prov.athenzURL),
@@ -197,22 +211,28 @@ func New(opts ...Option) (Authorizerd, error) {
 	}
 
 	if prov.enableRoleToken {
-		if prov.roleProcessor, err = role.New(
-			role.WithPubkeyProvider(pkPro),
-		); err != nil {
+		roleOpts := []role.Option{role.WithPubkeyProvider(pkPro)}
+		if prov.tokenCache != nil {
+			roleOpts = append(roleOpts, role.WithTokenCache(prov.tokenCache))
+		}
+		if prov.roleProcessor, err = role.New(roleOpts...); err != nil {
 			return nil, err
 		}
 	}
 
 	if prov.accessTokenParam.enable {
-		if prov.accessProcessor, err = access.New(
+		accessOpts := []access.Option{
 			access.WithJWKProvider(jwkPro),
 			access.WithEnableMTLSCertificateBoundAccessToken(prov.accessTokenParam.verifyCertThumbprint),
 			access.WithEnableVerifyClientID(prov.accessTokenParam.verifyClientID),
 			access.WithAuthorizedClientIDs(prov.accessTokenParam.authorizedClientIDs),
 			access.WithClientCertificateGoBackSeconds(prov.accessTokenParam.certBackdateDur),
 			access.WithClientCertificateOffsetSeconds(prov.accessTokenParam.certOffsetDur),
-		); err != nil {
+		}
+		if prov.tokenCache != nil {
+			accessOpts = append(accessOpts, access.WithTokenCache(prov.tokenCache))
+		}
+		if prov.accessProcessor, err = access.New(accessOpts...); err != nil {
 			return nil, err
 		}
 	}

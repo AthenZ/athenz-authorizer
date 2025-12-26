@@ -15,9 +15,11 @@
 package role
 
 import (
+	"context"
 	"strings"
 
 	"github.com/AthenZ/athenz-authorizer/v5/pubkey"
+	"github.com/AthenZ/athenz-authorizer/v5/tokencache"
 	"github.com/pkg/errors"
 )
 
@@ -27,7 +29,8 @@ type Processor interface {
 }
 
 type rtp struct {
-	pkp pubkey.Provider
+	pkp   pubkey.Provider
+	cache tokencache.Cache
 }
 
 // New returns the Role instance.
@@ -43,6 +46,13 @@ func New(opts ...Option) (Processor, error) {
 
 // ParseAndValidateRoleToken return the parsed and validated role token, and return any parsing and validate errors.
 func (r *rtp) ParseAndValidateRoleToken(tok string) (*Token, error) {
+	// Check cache first if enabled
+	if r.cache != nil {
+		if cached, found := r.cache.Get(context.Background(), tok); found {
+			return validatedTokenToRoleToken(cached), nil
+		}
+	}
+
 	rt, err := r.parseToken(tok)
 	if err != nil {
 		return nil, errors.Wrap(err, "error parse role token")
@@ -51,6 +61,13 @@ func (r *rtp) ParseAndValidateRoleToken(tok string) (*Token, error) {
 	if err = r.validate(rt); err != nil {
 		return nil, errors.Wrap(err, "error validate role token")
 	}
+
+	// Store in cache if enabled
+	if r.cache != nil {
+		validated := roleTokenToValidatedToken(rt, tok)
+		_ = r.cache.Set(context.Background(), tok, validated)
+	}
+
 	return rt, nil
 }
 
@@ -87,4 +104,42 @@ func (r *rtp) validate(rt *Token) error {
 		return errors.Wrapf(ErrRoleTokenInvalid, "invalid role token key ID %s. principal %s", rt.KeyID, rt.Principal)
 	}
 	return ver.Verify(rt.UnsignedToken, rt.Signature)
+}
+
+// roleTokenToValidatedToken converts role.Token to tokencache.ValidatedToken
+func roleTokenToValidatedToken(rt *Token, rawToken string) *tokencache.ValidatedToken {
+	return &tokencache.ValidatedToken{
+		Type:       tokencache.RoleTokenType,
+		RawToken:   rawToken,
+		Domain:     rt.Domain,
+		Principal:  rt.Principal,
+		Roles:      rt.Roles,
+		IssueTime:  rt.TimeStamp,
+		ExpiryTime: rt.ExpiryTime,
+		KeyID:      rt.KeyID,
+		Signature:  rt.Signature,
+	}
+}
+
+// validatedTokenToRoleToken converts tokencache.ValidatedToken to role.Token
+func validatedTokenToRoleToken(vt *tokencache.ValidatedToken) *Token {
+	return &Token{
+		Domain:        vt.Domain,
+		Roles:         vt.Roles,
+		Principal:     vt.Principal,
+		TimeStamp:     vt.IssueTime,
+		ExpiryTime:    vt.ExpiryTime,
+		KeyID:         vt.KeyID,
+		Signature:     vt.Signature,
+		UnsignedToken: extractUnsignedToken(vt.RawToken),
+	}
+}
+
+// extractUnsignedToken extracts the unsigned part from a role token
+func extractUnsignedToken(rawToken string) string {
+	parts := strings.SplitN(rawToken, ";s=", 2)
+	if len(parts) == 2 {
+		return parts[0]
+	}
+	return rawToken
 }

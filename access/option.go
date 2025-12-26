@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/AthenZ/athenz-authorizer/v5/jwk"
+	"github.com/AthenZ/athenz-authorizer/v5/tokencache"
 	"github.com/pkg/errors"
 )
 
@@ -86,6 +87,14 @@ func WithClientCertificateOffsetSeconds(t string) Option {
 			return errors.Wrap(err, "invalid offset duration")
 		}
 		r.clientCertificateOffsetSeconds = int64(rd.Seconds())
+		return nil
+	}
+}
+
+// WithTokenCache represents set token cache functional option
+func WithTokenCache(cache tokencache.Cache) Option {
+	return func(a *atp) error {
+		a.cache = cache
 		return nil
 	}
 }

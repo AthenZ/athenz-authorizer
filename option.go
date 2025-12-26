@@ -373,3 +373,17 @@ func WithOutputAuthorizedPrincipalLog() Option {
 		return nil
 	}
 }
+
+/*
+	token cache parameters
+*/
+
+// WithEnableTokenCache enables token validation result caching
+// This caches validation results for both role tokens and access tokens to avoid redundant signature verification
+// Cache TTL is determined by each token's expiry time
+func WithEnableTokenCache() Option {
+	return func(authz *authority) error {
+		authz.enableTokenCache = true
+		return nil
+	}
+}
