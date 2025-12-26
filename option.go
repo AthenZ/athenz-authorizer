@@ -96,6 +96,14 @@ func WithCacheExp(exp time.Duration) Option {
 	}
 }
 
+// WithDisablePrincipalCache returns a DisablePrincipalCache functional option
+func WithDisablePrincipalCache() Option {
+	return func(authz *authority) error {
+		authz.disablePrincipalCache = true
+		return nil
+	}
+}
+
 /*
 	pubkeyd parameters
 */
