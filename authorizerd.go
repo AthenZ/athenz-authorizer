@@ -52,6 +52,7 @@ type Authorizerd interface {
 	AuthorizeRoleToken(ctx context.Context, tok, act, res string) (Principal, error)
 	VerifyRoleCert(ctx context.Context, peerCerts []*x509.Certificate, act, res string) error
 	AuthorizeRoleCert(ctx context.Context, peerCerts []*x509.Certificate, act, res string) (Principal, error)
+	AuthorizeWithClaims(ctx context.Context, domain string, roles []string, principal string, act, res string, issueTime, expiryTime int64) (Principal, error)
 	GetPolicyCache(ctx context.Context) map[string][]*policy.Assertion
 	GetPrincipalCacheLen() int
 	GetPrincipalCacheSize() int64
@@ -373,6 +374,54 @@ func (a *authority) VerifyAccessToken(ctx context.Context, tok, act, res string,
 // AuthorizeAccessToken verifies the access token on the specific (action, resource) pair and returns the result of verifying or verification error if unauthorized.
 func (a *authority) AuthorizeAccessToken(ctx context.Context, tok, act, res string, cert *x509.Certificate) (Principal, error) {
 	return a.authorize(ctx, accessToken, tok, act, res, "", cert)
+}
+
+// AuthorizeWithClaims authorizes based on pre-verified JWT claims (domain, roles, principal) without JWT signature validation.
+// This method is intended for use when JWT verification has already been performed by a trusted proxy (e.g., Envoy).
+// It performs only policy-based authorization checks.
+func (a *authority) AuthorizeWithClaims(ctx context.Context, domain string, roles []string, principalName string, act, res string, issueTime, expiryTime int64) (Principal, error) {
+	// Validate required parameters
+	if domain == "" || len(roles) == 0 || principalName == "" {
+		return nil, errors.Wrap(ErrInvalidParameters, "empty domain / roles / principal")
+	}
+	if act == "" || res == "" {
+		return nil, errors.Wrap(ErrInvalidParameters, "empty action / resource")
+	}
+
+	// Policyd must be enabled for authorization
+	if a.disablePolicyd {
+		return nil, errors.New("error policyd is not running")
+	}
+
+	// Note: Claims-based authorization does not use principal cache since JWT verification
+	// has already been performed by the trusted proxy (Envoy)
+
+	// Create principal from claims
+	p := &principal{
+		name:       principalName,
+		roles:      roles,
+		domain:     domain,
+		issueTime:  issueTime,
+		expiryTime: expiryTime,
+	}
+
+	// Add resource prefix
+	res = a.resourcePrefix + res
+
+	// Check policy
+	authorizedRoles, err := a.policyd.CheckPolicyRoles(ctx, domain, roles, act, res)
+	if err != nil {
+		glg.Infof("check policy error, err: %v, principal: %s, action: %s, resource: %s", err, principalName, act, res)
+		return nil, errors.Wrap(err, "error check policy")
+	}
+
+	p.authorizedRoles = authorizedRoles
+
+	if a.outputAuthorizedPrincipalLog {
+		glg.Infof("access authorized (claims), principal: %s, action: %s, resource: %s", principalName, act, res)
+	}
+
+	return p, nil
 }
 
 func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query string, cert *x509.Certificate) (Principal, error) {
