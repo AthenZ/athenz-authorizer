@@ -242,7 +242,18 @@ func (a *authority) initAuthorizers() error {
 
 	if a.accessTokenParam.enable {
 		atVerifier := func(r *http.Request, act, res string) (Principal, error) {
-			tokenString, err := request.AuthorizationHeaderExtractor.ExtractToken(r)
+			var tokenString string
+			var err error
+			if a.accessTokenParam.accessTokenAuthHeader == "Authorization" {
+				tokenString, err = request.AuthorizationHeaderExtractor.ExtractToken(r)
+			} else {
+				tokenHeader := r.Header.Get(a.accessTokenParam.accessTokenAuthHeader)
+				if len(tokenHeader) > 6 && strings.ToUpper(tokenHeader[0:7]) == "BEARER " {
+					tokenString = tokenHeader[7:]
+				} else {
+					tokenString = tokenHeader
+				}
+			}
 			if err != nil {
 				return nil, err
 			}

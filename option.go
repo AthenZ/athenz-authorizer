@@ -33,7 +33,7 @@ var (
 		WithEnablePubkeyd(),
 		WithEnablePolicyd(),
 		WithEnableJwkd(),
-		WithAccessTokenParam(NewAccessTokenParam(true, true, "1h", "1h", false, nil)),
+		WithAccessTokenParam(NewAccessTokenParam(true, true, "1h", "1h", false, nil, "Authorization")),
 		WithEnableRoleToken(),
 		WithRoleAuthHeader("Athenz-Role-Auth"),
 		WithEnableRoleCert(),
@@ -42,12 +42,13 @@ var (
 )
 
 type AccessTokenParam struct {
-	enable               bool
-	verifyCertThumbprint bool
-	certBackdateDur      string
-	certOffsetDur        string
-	verifyClientID       bool
-	authorizedClientIDs  map[string][]string
+	enable                bool
+	verifyCertThumbprint  bool
+	certBackdateDur       string
+	certOffsetDur         string
+	verifyClientID        bool
+	authorizedClientIDs   map[string][]string
+	accessTokenAuthHeader string
 }
 
 // Option represents a functional option
@@ -265,7 +266,7 @@ func WithJwkURLs(urls []string) Option {
 */
 
 // NewAccessTokenParam returns a new access token parameter
-func NewAccessTokenParam(enable bool, verifyCertThumbprint bool, certBackdateDur, certOffsetDur string, verifyClientID bool, authorizedClientIDs map[string][]string) AccessTokenParam {
+func NewAccessTokenParam(enable bool, verifyCertThumbprint bool, certBackdateDur, certOffsetDur string, verifyClientID bool, authorizedClientIDs map[string][]string, accessTokenAuthHeader string) AccessTokenParam {
 	return AccessTokenParam{
 		// Flag to enable verify of access token
 		enable: enable,
@@ -279,6 +280,8 @@ func NewAccessTokenParam(enable bool, verifyCertThumbprint bool, certBackdateDur
 		verifyClientID: verifyClientID,
 		// The list of authorized client_id and common name.
 		authorizedClientIDs: authorizedClientIDs,
+		// The accessTokenAuthHeader parameter specifies the HTTP header name from which the access token should be extracted (e.g., "Authorization").
+		accessTokenAuthHeader: accessTokenAuthHeader,
 	}
 }
 
