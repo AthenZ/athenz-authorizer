@@ -248,7 +248,7 @@ func (a *authority) initAuthorizers() error {
 				tokenString, err = request.AuthorizationHeaderExtractor.ExtractToken(r)
 			} else {
 				headerValue := r.Header.Get(a.accessTokenParam.accessTokenAuthHeader)
-				if len(headerValue) > 6 && strings.ToUpper(headerValue[0:7]) == "BEARER " {
+				if len(headerValue) > 6 && strings.EqualFold(headerValue[:7], "bearer ") {
 					tokenString = headerValue[7:]
 				} else {
 					tokenString = headerValue
