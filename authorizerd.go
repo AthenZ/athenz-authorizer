@@ -244,14 +244,14 @@ func (a *authority) initAuthorizers() error {
 		atVerifier := func(r *http.Request, act, res string) (Principal, error) {
 			var tokenString string
 			var err error
-			if a.accessTokenParam.accessTokenAuthHeader == "Authorization" {
+			if a.accessTokenParam.accessTokenAuthHeader == "Authorization" || a.accessTokenParam.accessTokenAuthHeader == "" {
 				tokenString, err = request.AuthorizationHeaderExtractor.ExtractToken(r)
 			} else {
-				tokenHeader := r.Header.Get(a.accessTokenParam.accessTokenAuthHeader)
-				if len(tokenHeader) > 6 && strings.ToUpper(tokenHeader[0:7]) == "BEARER " {
-					tokenString = tokenHeader[7:]
+				headerValue := r.Header.Get(a.accessTokenParam.accessTokenAuthHeader)
+				if len(headerValue) > 6 && strings.ToUpper(headerValue[0:7]) == "BEARER " {
+					tokenString = headerValue[7:]
 				} else {
-					tokenString = tokenHeader
+					tokenString = headerValue
 				}
 			}
 			if err != nil {

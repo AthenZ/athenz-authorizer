@@ -2353,6 +2353,63 @@ func Test_authorizer_CustomAuthHeader(t *testing.T) {
 				wantResult: nil,
 			}
 		}(),
+		func() test {
+			c := gache.New[Principal]()
+			at := &access.OAuth2AccessTokenClaim{
+				Scope: []string{"role"},
+				BaseClaim: access.BaseClaim{
+					StandardClaims: jwt.StandardClaims{
+						Audience: "domain",
+					},
+				},
+			}
+			p := &oAuthAccessToken{
+				principal: principal{
+					name:            at.BaseClaim.Subject,
+					roles:           at.Scope,
+					domain:          at.BaseClaim.Audience,
+					issueTime:       at.IssuedAt,
+					expiryTime:      at.ExpiresAt,
+					authorizedRoles: []string{"role"},
+				},
+				clientID: at.ClientID,
+			}
+
+			apm := &AccessProcessorMock{
+				atc:     at,
+				wantErr: nil,
+			}
+
+			pdm := &PolicydMock{
+				CheckPolicyRoleFunc: func(ctx context.Context, domain string, roles []string, action, resource string) ([]string, error) {
+					if domain != "domain" || len(roles) != 1 || roles[0] != "role" {
+						return nil, errors.New("Audience/Scope mismatch")
+					}
+					return []string{"role"}, nil
+				},
+			}
+
+			return test{
+				name: "test empty header uses Authorization",
+				args: args{
+					ctx:    context.Background(),
+					header: "Authorization",
+					token:  "Bearer test-token",
+					act:    "dummyAct",
+					res:    "dummyRes",
+				},
+				fields: fields{
+					accessTokenParam: NewAccessTokenParam(true, true, "1h", "1h", false, nil, ""),
+					policyd:          pdm,
+					accessProcessor:  apm,
+					cache:            c,
+					cacheExp:         time.Minute,
+					cacheMemoryUsage: &atomic.Int64{},
+				},
+				wantErr:    false,
+				wantResult: p,
+			}
+		}(),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
