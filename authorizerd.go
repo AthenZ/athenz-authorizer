@@ -247,12 +247,16 @@ func (a *authority) initAuthorizers() error {
 			if a.accessTokenParam.accessTokenAuthHeader == "Authorization" || a.accessTokenParam.accessTokenAuthHeader == "" {
 				tokenString, err = request.AuthorizationHeaderExtractor.ExtractToken(r)
 			} else {
-				headerValue := r.Header.Get(a.accessTokenParam.accessTokenAuthHeader)
-				if len(headerValue) > 6 && strings.EqualFold(headerValue[:7], "bearer ") {
-					tokenString = headerValue[7:]
-				} else {
-					tokenString = headerValue
+				customHeaderExtractor := &request.PostExtractionFilter{
+					Extractor: request.HeaderExtractor{a.accessTokenParam.accessTokenAuthHeader},
+					Filter: func(tok string) (string, error) {
+						if len(tok) > 6 && strings.EqualFold(tok[0:7], "bearer ") {
+							return tok[7:], nil
+						}
+						return tok, nil
+					},
 				}
+				tokenString, err = customHeaderExtractor.ExtractToken(r)
 			}
 			if err != nil {
 				return nil, err
