@@ -864,12 +864,13 @@ func TestWithJwkRetryDelay(t *testing.T) {
 
 func TestNewAccessTokenParam(t *testing.T) {
 	type args struct {
-		enable               bool
-		verifyCertThumbprint bool
-		verifyClientID       bool
-		authorizedClientIDs  map[string][]string
-		certBackdateDur      string
-		certOffsetDur        string
+		enable                bool
+		verifyCertThumbprint  bool
+		verifyClientID        bool
+		authorizedClientIDs   map[string][]string
+		certBackdateDur       string
+		certOffsetDur         string
+		accessTokenAuthHeader string
 	}
 	tests := []struct {
 		name string
@@ -879,14 +880,31 @@ func TestNewAccessTokenParam(t *testing.T) {
 		{
 			name: "create success",
 			args: args{
-				verifyCertThumbprint: true,
-				certBackdateDur:      "2h",
-				certOffsetDur:        "2h",
+				verifyCertThumbprint:  true,
+				certBackdateDur:       "2h",
+				certOffsetDur:         "2h",
+				accessTokenAuthHeader: "Authorization",
 			},
 			want: AccessTokenParam{
-				verifyCertThumbprint: true,
-				certBackdateDur:      "2h",
-				certOffsetDur:        "2h",
+				verifyCertThumbprint:  true,
+				certBackdateDur:       "2h",
+				certOffsetDur:         "2h",
+				accessTokenAuthHeader: "Authorization",
+			},
+		},
+		{
+			name: "create success with custom header",
+			args: args{
+				verifyCertThumbprint:  true,
+				certBackdateDur:       "1h",
+				certOffsetDur:         "1h",
+				accessTokenAuthHeader: "X-Custom-Auth",
+			},
+			want: AccessTokenParam{
+				verifyCertThumbprint:  true,
+				certBackdateDur:       "1h",
+				certOffsetDur:         "1h",
+				accessTokenAuthHeader: "X-Custom-Auth",
 			},
 		},
 	}
@@ -899,6 +917,7 @@ func TestNewAccessTokenParam(t *testing.T) {
 				tt.args.certOffsetDur,
 				tt.args.verifyClientID,
 				tt.args.authorizedClientIDs,
+				tt.args.accessTokenAuthHeader,
 			); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewAccessTokenParam() = %v, want %v", got, tt.want)
 			}
@@ -921,7 +940,7 @@ func TestWithAccessTokenParams(t *testing.T) {
 				NewAccessTokenParam(true, true, "1h", "1h", true, map[string][]string{
 					"common_name1": {"client_id1", "client_id2"},
 					"common_name2": {"client_id1", "client_id2"},
-				})
+				}, "Authorization")
 
 			return test{
 				name: "set success",
@@ -935,6 +954,30 @@ func TestWithAccessTokenParams(t *testing.T) {
 					}
 					if !reflect.DeepEqual(authz.accessTokenParam, accessTokenParam) {
 						return fmt.Errorf("invalid param was set")
+					}
+					return nil
+				},
+			}
+		}(),
+		func() test {
+			accessTokenParam :=
+				NewAccessTokenParam(true, false, "2h", "2h", false, nil, "X-Custom-Auth")
+
+			return test{
+				name: "set success with custom header",
+				args: args{
+					accessTokenParam: accessTokenParam,
+				},
+				checkFunc: func(opt Option) error {
+					authz := &authority{}
+					if err := opt(authz); err != nil {
+						return err
+					}
+					if !reflect.DeepEqual(authz.accessTokenParam, accessTokenParam) {
+						return fmt.Errorf("invalid param was set")
+					}
+					if authz.accessTokenParam.accessTokenAuthHeader != "X-Custom-Auth" {
+						return fmt.Errorf("accessTokenAuthHeader was not set correctly")
 					}
 					return nil
 				},

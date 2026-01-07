@@ -241,8 +241,25 @@ func (a *authority) initAuthorizers() error {
 	}
 
 	if a.accessTokenParam.enable {
+		var extractor request.Extractor
+		headerName := a.accessTokenParam.accessTokenAuthHeader
+
+		if headerName == "" || headerName == "Authorization" {
+			extractor = request.AuthorizationHeaderExtractor
+		} else {
+			extractor = &request.PostExtractionFilter{
+				Extractor: request.HeaderExtractor{headerName},
+				Filter: func(tok string) (string, error) {
+					if len(tok) > 6 && strings.EqualFold(tok[0:7], "bearer ") {
+						return tok[7:], nil
+					}
+					return tok, nil
+				},
+			}
+		}
+
 		atVerifier := func(r *http.Request, act, res string) (Principal, error) {
-			tokenString, err := request.AuthorizationHeaderExtractor.ExtractToken(r)
+			tokenString, err := extractor.ExtractToken(r)
 			if err != nil {
 				return nil, err
 			}
