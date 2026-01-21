@@ -73,9 +73,10 @@ type authority struct {
 	client    *http.Client
 
 	// successful result cache
-	cache            gache.Gache[Principal]
-	cacheExp         time.Duration
-	cacheMemoryUsage *atomic.Int64
+	cache                 gache.Gache[Principal]
+	cacheExp              time.Duration
+	cacheMemoryUsage      *atomic.Int64
+	disablePrincipalCache bool
 
 	// roleCertURIPrefix
 	roleCertURIPrefix string
@@ -328,9 +329,14 @@ func (a *authority) Init(ctx context.Context) error {
 func (a *authority) Start(ctx context.Context) <-chan error {
 	var (
 		ech              = make(chan error, 200)
-		g                = a.cache.StartExpired(ctx, a.cacheExp/2)
 		cech, pech, jech <-chan error
 	)
+
+	// Start cache expiration goroutine only if cache is enabled
+	var g gache.Gache[Principal]
+	if !a.disablePrincipalCache {
+		g = a.cache.StartExpired(ctx, a.cacheExp/2)
+	}
 
 	if !a.disablePubkeyd {
 		cech = a.pubkeyd.Start(ctx)
@@ -347,8 +353,10 @@ func (a *authority) Start(ctx context.Context) <-chan error {
 		for {
 			select {
 			case <-ctx.Done():
-				g.Stop()
-				g.Clear()
+				if !a.disablePrincipalCache {
+					g.Stop()
+					g.Clear()
+				}
 				ech <- ctx.Err()
 				return
 			case err := <-cech:
@@ -418,16 +426,18 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 	}
 
 	// check if exists in verification success cache
-	cached, ok := a.cache.Get(key.String())
-	if ok {
-		glg.DebugFunc(func() string {
-			return fmt.Sprintf("use cached result. masked tok: %s, masked key: %s", maskToken(m, tok), maskCacheKey(key.String(), tok))
-		})
+	if !a.disablePrincipalCache {
+		cached, ok := a.cache.Get(key.String())
+		if ok {
+			glg.DebugFunc(func() string {
+				return fmt.Sprintf("use cached result. masked tok: %s, masked key: %s", maskToken(m, tok), maskCacheKey(key.String(), tok))
+			})
 
-		if a.outputAuthorizedPrincipalLog {
-			glg.Infof("access authorized by cache, principal: %s, action: %s, resource: %s", cached.(Principal).Name(), act, res)
+			if a.outputAuthorizedPrincipalLog {
+				glg.Infof("access authorized by cache, principal: %s, action: %s, resource: %s", cached.Name(), act, res)
+			}
+			return cached, nil
 		}
-		return cached.(Principal), nil
 	}
 
 	var (
@@ -497,15 +507,17 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 		}
 	}
 
-	glg.DebugFunc(func() string {
-		return fmt.Sprintf("set token result. masked tok: %s, masked key: %s, act: %s, res: %s", maskToken(m, tok), maskCacheKey(key.String(), tok), act, res)
-	})
-	a.cache.SetWithExpire(key.String(), p, a.cacheExp)
+	if !a.disablePrincipalCache {
+		glg.DebugFunc(func() string {
+			return fmt.Sprintf("set token result. masked tok: %s, masked key: %s, act: %s, res: %s", maskToken(m, tok), maskCacheKey(key.String(), tok), act, res)
+		})
+		a.cache.SetWithExpire(key.String(), p, a.cacheExp)
 
-	// Calculate memory usage of key and principal that cannot be calculated with gache.Size()
-	principalCacheSize := principalCacheMemoryUsage(key.String(), p)
+		// Calculate memory usage of key and principal that cannot be calculated with gache.Size()
+		principalCacheSize := principalCacheMemoryUsage(key.String(), p)
 
-	a.cacheMemoryUsage.Add(principalCacheSize)
+		a.cacheMemoryUsage.Add(principalCacheSize)
+	}
 
 	if a.outputAuthorizedPrincipalLog {
 		glg.Infof("access authorized, principal: %s, action: %s, resource: %s", p.Name(), act, res)
