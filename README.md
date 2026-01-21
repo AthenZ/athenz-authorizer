@@ -159,6 +159,7 @@ The authorizer uses functional options pattern to initialize the instance. All t
 | certOffsetDur        | Offset window to accept access token with a mismatching certificate thumbprint | 1 Hour            | No           | "1h"                                           |
 | verifyClientID       | Use authorized client ID verification                                          | false             | No           | false                                          |
 | authorizedClientIDs  | Authorized client ID to certificate common name map                            | nil               | No           | \{ "atClientID": \{ "certCN1", "certCN2" \} \} |
+| accessTokenAuthHeader  | The HTTP header to extract access token                                       | Authorization               | No           | "Authorization"                                |
 
 ## About releases
 
