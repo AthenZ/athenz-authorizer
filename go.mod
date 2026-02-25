@@ -1,6 +1,6 @@
 module github.com/AthenZ/athenz-authorizer/v5
 
-go 1.26
+go 1.25.0
 
 require (
 	github.com/AthenZ/athenz v1.11.43
