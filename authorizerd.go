@@ -132,9 +132,13 @@ const (
 
 // New creates the Authorizerd object with the options
 func New(opts ...Option) (Authorizerd, error) {
+	gache_opts := []gache.Option[Principal]{
+		gache.WithMaxKeyLength[Principal](0),
+	}
+
 	var (
 		prov = &authority{
-			cache:            gache.New[Principal](),
+			cache:            gache.New[Principal](gache_opts...),
 			cacheMemoryUsage: &atomic.Int64{},
 		}
 		err    error
