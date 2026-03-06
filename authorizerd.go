@@ -138,7 +138,9 @@ func New(opts ...Option) (Authorizerd, error) {
 
 	var (
 		prov = &authority{
-			cache:            gache.New[Principal](gache_opts...),
+			cache: gache.New[Principal](
+				gache.WithMaxKeyLength[Principal](0),
+			),
 			cacheMemoryUsage: &atomic.Int64{},
 		}
 		err    error
