@@ -16,7 +16,9 @@ package authorizerd
 
 import (
 	"context"
+	"crypto/sha256"
 	"crypto/x509"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"strings"
@@ -419,11 +421,14 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 		}
 	}
 
+	rawKey := key.String()
+	cacheKey := hashCacheKey(rawKey)
+
 	// check if exists in verification success cache
-	cached, ok := a.cache.Get(key.String())
+	cached, ok := a.cache.Get(cacheKey)
 	if ok {
 		glg.DebugFunc(func() string {
-			return fmt.Sprintf("use cached result. masked tok: %s, masked key: %s", maskToken(m, tok), maskCacheKey(key.String(), tok))
+			return fmt.Sprintf("use cached result. masked tok: %s, key hash: %s", maskToken(m, tok), cacheKey)
 		})
 
 		if a.outputAuthorizedPrincipalLog {
@@ -500,12 +505,12 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 	}
 
 	glg.DebugFunc(func() string {
-		return fmt.Sprintf("set token result. masked tok: %s, masked key: %s, act: %s, res: %s", maskToken(m, tok), maskCacheKey(key.String(), tok), act, res)
+		return fmt.Sprintf("set token result. masked tok: %s, key hash: %s, act: %s, res: %s", maskToken(m, tok), cacheKey, act, res)
 	})
-	a.cache.SetWithExpire(key.String(), p, a.cacheExp)
+	a.cache.SetWithExpire(cacheKey, p, a.cacheExp)
 
 	// Calculate memory usage of key and principal that cannot be calculated with gache.Size()
-	principalCacheSize := principalCacheMemoryUsage(key.String(), p)
+	principalCacheSize := principalCacheMemoryUsage(cacheKey, p)
 
 	a.cacheMemoryUsage.Add(principalCacheSize)
 
@@ -514,6 +519,12 @@ func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query 
 	}
 
 	return p, nil
+}
+
+// hashCacheKey returns the hash value of the cache key
+func hashCacheKey(raw string) string {
+	sum := sha256.Sum256([]byte(raw))
+	return hex.EncodeToString(sum[:])
 }
 
 // principalCacheMemoryUsage returns memory usage of principal
