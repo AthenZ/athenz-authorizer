@@ -51,6 +51,15 @@ GO111MODULE=on go mod tidy
 
 You have to commit the changes to `go.mod` and `go.sum` before submitting the pull request.
 
+## How to release
+
+> [!TIP]
+> For consistent release DX, please refrain from creating a tag with git command
+
+Create a release with GitHub UI from the following: https://github.com/AthenZ/athenz-authorizer/releases
+
+![draft_a_new_release](./images/draft_a_new_release.png)
+
 ## Contributor Covenant Code of Conduct
 
 ### Attribution
