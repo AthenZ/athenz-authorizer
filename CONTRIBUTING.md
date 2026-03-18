@@ -58,7 +58,7 @@ You have to commit the changes to `go.mod` and `go.sum` before submitting the pu
 
 Create a release with GitHub UI from the following: https://github.com/AthenZ/athenz-authorizer/releases
 
-![draft_a_new_release](./images/draft_a_new_release.png)
+![draft_a_new_release](./docs/assets/draft_a_new_release.png)
 
 ## Contributor Covenant Code of Conduct
 
