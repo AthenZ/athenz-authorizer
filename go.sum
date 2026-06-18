@@ -1,5 +1,5 @@
-github.com/AthenZ/athenz v1.12.42 h1:j8jKFyilzgcyMbVtvSQOKKJS9CSXAgMYOeqVfdLAAdE=
-github.com/AthenZ/athenz v1.12.42/go.mod h1:oCqPzm9W6LLYWv9Oe+mBw4WZFzZPd5yk+LxHr2NZE6o=
+github.com/AthenZ/athenz v1.12.39 h1:d9h0Uy69fO7Jw9GY1Y0HETRJ+lLIsVscxEypGylu8BQ=
+github.com/AthenZ/athenz v1.12.39/go.mod h1:7N7hq+Z1NCOcGy1UO5+BrNtg0u8f18x+dFedUsp18Os=
 github.com/ardielle/ardielle-go v1.5.2 h1:TilHTpHIQJ27R1Tl/iITBzMwiUGSlVfiVhwDNGM3Zj4=
 github.com/ardielle/ardielle-go v1.5.2/go.mod h1:I4hy1n795cUhaVt/ojz83SNVCYIGsAFAONtv2Dr7HUI=
 github.com/cenkalti/backoff/v5 v5.0.3 h1:ZN+IMa753KfX5hd8vVaMixjnqRZ3y8CuJKRKj1xcsSM=

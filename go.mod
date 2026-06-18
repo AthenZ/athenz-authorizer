@@ -3,7 +3,7 @@ module github.com/AthenZ/athenz-authorizer/v5
 go 1.26.2
 
 require (
-	github.com/AthenZ/athenz v1.12.42
+	github.com/AthenZ/athenz v1.12.39
 	github.com/ardielle/ardielle-go v1.5.2
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/go-cmp v0.7.0
