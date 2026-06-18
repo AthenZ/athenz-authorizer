@@ -1379,17 +1379,11 @@ func Test_policyd_CheckPolicy_goroutine(t *testing.T) {
 			}
 
 			// check runtime stack for go routine leak
-			var diff string
-			for range 10 {
-				time.Sleep(time.Millisecond * 500)
-				lenEnd := runtime.Stack(b, true)
-				diff = cmp.Diff(oldStack, string(b[:lenEnd]))
-				if !strings.Contains(diff, "+\tgithub.com/AthenZ/athenz-authorizer/v5/policy.(*policyd).CheckPolicy") {
-					diff = ""
-					break
-				}
-			}
-			if diff != "" {
+			time.Sleep(time.Millisecond * 1500) // wait for some background process to cleanup
+			lenEnd := runtime.Stack(b, true)
+			// t.Log(string(b[:lenEnd]))
+			diff := cmp.Diff(oldStack, string(b[:lenEnd]))
+			if strings.Contains(diff, "+\tgithub.com/AthenZ/athenz-authorizer/v5/policy.(*policyd).CheckPolicy") {
 				t.Errorf("go routine leak:\n%v", diff)
 			}
 		})
