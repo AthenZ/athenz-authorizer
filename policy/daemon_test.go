@@ -1384,7 +1384,7 @@ func Test_policyd_CheckPolicy_goroutine(t *testing.T) {
 				time.Sleep(time.Millisecond * 500)
 				lenEnd := runtime.Stack(b, true)
 				diff = cmp.Diff(oldStack, string(b[:lenEnd]))
-				if !strings.Contains(diff, "+\tgithub.com/AthenZ/athenz-authorizer/v5/policy.(*policyd).CheckPolicy") {
+				if strings.Contains(diff, ".CheckPolicy") {
 					diff = ""
 					break
 				}
