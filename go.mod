@@ -2,8 +2,6 @@ module github.com/AthenZ/athenz-authorizer/v5
 
 go 1.26.2
 
-replace golang.org/x/net => golang.org/x/net v0.56.0
-
 require (
 	github.com/AthenZ/athenz v1.12.39
 	github.com/ardielle/ardielle-go v1.5.2
@@ -56,7 +54,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
-	golang.org/x/net v0.53.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/sys v0.46.0 // indirect
 	golang.org/x/text v0.38.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260401024825-9d38bb4040a9 // indirect
