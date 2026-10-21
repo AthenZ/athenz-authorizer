@@ -31,7 +31,7 @@ func Test_maskCacheKey(t *testing.T) {
 		{
 			name: "normal key, normal token",
 			args: args{
-				key: "tok36:key35",
+				key: "rtok36:key35",
 				tok: "tok36",
 			},
 			want: ":key35",
@@ -39,23 +39,23 @@ func Test_maskCacheKey(t *testing.T) {
 		{
 			name: "normal key, empty token",
 			args: args{
-				key: ":key44",
+				key: "a:key44",
 				tok: "",
 			},
 			want: ":key44",
 		},
 		{
-			name: "empty key, normal token",
+			name: "no suffix, normal token",
 			args: args{
-				key: "tok53",
+				key: "atok53",
 				tok: "tok53",
 			},
 			want: "",
 		},
 		{
-			name: "empty key, empty token",
+			name: "no suffix, empty token",
 			args: args{
-				key: "",
+				key: "r",
 				tok: "",
 			},
 			want: "",

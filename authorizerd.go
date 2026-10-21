@@ -396,6 +396,14 @@ func (a *authority) AuthorizeAccessToken(ctx context.Context, tok, act, res stri
 
 func (a *authority) authorize(ctx context.Context, m mode, tok, act, res, query string, cert *x509.Certificate) (Principal, error) {
 	var key strings.Builder
+	key.Grow(len(tok) + 1)
+	// Separate cache entries by token type before checking cached authorization.
+	switch m {
+	case roleToken:
+		key.WriteByte('r')
+	case accessToken:
+		key.WriteByte('a')
+	}
 	key.WriteString(tok)
 
 	if cert != nil {
