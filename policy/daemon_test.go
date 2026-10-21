@@ -2235,6 +2235,72 @@ func Test_simplifyAndCachePolicy(t *testing.T) {
 	}
 }
 
+func Test_simplifyAndCachePolicy_ConcurrentDenyPrecedence(t *testing.T) {
+	const (
+		iterations = 100
+		resources  = 64
+	)
+	ctx := context.Background()
+	for _, tc := range []struct {
+		name    string
+		effects [2]string
+		wantErr error
+	}{
+		{"allow_only", [2]string{"allow", "ALLOW"}, nil},
+		{"deny_only", [2]string{"deny", "DENY"}, ErrDenyByPolicy},
+		{"allow_and_deny", [2]string{"allow", "deny"}, ErrDenyByPolicy},
+		{"allow_and_uppercase_deny", [2]string{"allow", "DENY"}, ErrDenyByPolicy},
+		{"allow_and_mixed_case_deny", [2]string{"allow", "DeNy"}, ErrDenyByPolicy},
+	} {
+		for _, reversePolicies := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/reverse=%t", tc.name, reversePolicies), func(t *testing.T) {
+				firstPolicy := &util.Policy{}
+				secondPolicy := &util.Policy{}
+				for i := range resources {
+					resource := fmt.Sprintf("domain:resource%d", i)
+					firstPolicy.Assertions = append(firstPolicy.Assertions, &util.Assertion{
+						Role: "domain:role.reader", Action: "read", Resource: resource, Effect: tc.effects[0],
+					})
+					secondPolicy.Assertions = append(secondPolicy.Assertions, &util.Assertion{
+						Role: "domain:role.reader", Action: "read", Resource: resource, Effect: tc.effects[1],
+					})
+				}
+				policies := []*util.Policy{firstPolicy, secondPolicy}
+				if reversePolicies {
+					policies[0], policies[1] = policies[1], policies[0]
+				}
+				sp := &SignedPolicy{DomainSignedPolicyData: util.DomainSignedPolicyData{
+					SignedPolicyData: &util.SignedPolicyData{
+						Expires:    &rdl.Timestamp{Time: fastime.Now().Add(time.Hour)},
+						PolicyData: &util.PolicyData{Policies: policies},
+					},
+				}}
+
+				for iteration := range iterations {
+					rp := gache.New[[]*Assertion]()
+					if err := simplifyAndCachePolicy(ctx, rp, sp); err != nil {
+						t.Fatalf("iteration %d: simplifyAndCachePolicy() error = %v", iteration, err)
+					}
+					assertions, ok := rp.Get("domain:role.reader")
+					if !ok || len(assertions) != resources {
+						t.Fatalf("iteration %d: got %d assertions, want %d", iteration, len(assertions), resources)
+					}
+					for _, assertion := range assertions {
+						if !errors.Is(assertion.Effect, tc.wantErr) {
+							t.Fatalf("iteration %d: %s effect = %v, want %v", iteration, assertion.Resource, assertion.Effect, tc.wantErr)
+						}
+					}
+					p := &policyd{rolePolicies: &rp}
+					resource := fmt.Sprintf("resource%d", iteration%resources)
+					if err := p.CheckPolicy(ctx, "domain", []string{"reader"}, "read", resource); !errors.Is(err, tc.wantErr) {
+						t.Fatalf("iteration %d: CheckPolicy(%s) error = %v, want %v", iteration, resource, err, tc.wantErr)
+					}
+				}
+			})
+		}
+	}
+}
+
 func Test_policyd_GetPolicyCache(t *testing.T) {
 	type fields struct {
 		expiryMargin  time.Duration
