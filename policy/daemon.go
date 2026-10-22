@@ -332,13 +332,11 @@ func simplifyAndCachePolicy(ctx context.Context, rp gache.Gache[[]*Assertion], s
 					return ctx.Err()
 				default:
 					km := fmt.Sprintf("%s,%s,%s", ass.Role, ass.Action, ass.Resource)
-					if _, ok := assm.Load(km); !ok {
+					if strings.EqualFold("deny", ass.Effect) {
+						// Deny always wins, regardless of the order of concurrent assertions.
 						assm.Store(km, ass)
 					} else {
-						// deny policy will override allow policy, and also remove duplication
-						if strings.EqualFold("deny", ass.Effect) {
-							assm.Store(km, ass)
-						}
+						assm.LoadOrStore(km, ass)
 					}
 				}
 			}
