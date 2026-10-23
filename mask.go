@@ -17,7 +17,8 @@ package authorizerd
 import "strings"
 
 func maskCacheKey(key, tok string) string {
-	return key[len(tok):]
+	// Skip the token-type prefix and the token itself.
+	return key[1+len(tok):]
 }
 
 func maskToken(m mode, tok string) string {
