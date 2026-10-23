@@ -32,6 +32,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/kpango/fastime"
 	"github.com/kpango/gache/v2"
+	"github.com/kpango/glg"
 	"github.com/pkg/errors"
 )
 
@@ -216,6 +217,8 @@ func Test_policyd_Start(t *testing.T) {
 				checkFunc: func(p *policyd, ch <-chan error) error {
 					time.Sleep(time.Millisecond * 100)
 					cancel()
+					for range ch {
+					}
 					asss, ok := (*p.rolePolicies).Get("dummyDom:role.dummyRole")
 					if !ok {
 						return errors.New("rolePolicies is empty")
@@ -292,7 +295,8 @@ func Test_policyd_Start(t *testing.T) {
 				checkFunc: func(p *policyd, ch <-chan error) error {
 					time.Sleep(time.Millisecond * 100)
 					cancel()
-					time.Sleep(time.Millisecond * 50)
+					for range ch {
+					}
 					asss, ok := (*p.rolePolicies).Get("dummyDom:role.dummyRole")
 					if !ok {
 						return errors.New("rolePolicies is empty")
@@ -382,7 +386,8 @@ func Test_policyd_Start(t *testing.T) {
 				checkFunc: func(p *policyd, ch <-chan error) error {
 					time.Sleep(time.Millisecond * 100)
 					cancel()
-					time.Sleep(time.Millisecond * 50)
+					for range ch {
+					}
 					asss, ok := (*p.rolePolicies).Get("dummyDom:role.dummyRole")
 					if !ok {
 						return errors.New("rolePolicies is empty")
@@ -724,6 +729,36 @@ func Test_policyd_Update(t *testing.T) {
 				t.Errorf("policyd.Update() rolePolicies diff = %s", cmp.Diff(gotRps, tt.wantRps, cmpopts.IgnoreFields(Assertion{}, "ActionRegexp", "ResourceRegexp")))
 			}
 		})
+	}
+}
+
+func Test_policyd_UpdateWithConcurrentLogging(t *testing.T) {
+	p, err := New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for i := 0; i < 100; i++ {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				glg.Info("concurrent log")
+				runtime.Gosched()
+			}
+		}
+	}()
+	defer func() {
+		cancel()
+		<-done
+	}()
+	for i := 0; i < 100; i++ {
+		if err := p.Update(ctx); err != nil {
+			t.Fatal(err)
+		}
 	}
 }
 

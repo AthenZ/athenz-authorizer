@@ -34,6 +34,10 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+func init() {
+	glg.Get().DisableColor()
+}
+
 // Daemon represents the daemon to retrieve policy data from Athenz.
 type Daemon interface {
 	Start(context.Context) <-chan error
@@ -152,7 +156,6 @@ func (p *policyd) Start(ctx context.Context) <-chan error {
 
 // Update updates and cache policy data
 func (p *policyd) Update(ctx context.Context) error {
-	glg.Get().DisableColor()
 	jobID := fastime.Now().Unix()
 	glg.Infof("[%d] will update policy", jobID)
 	eg := errgroup.Group{}
